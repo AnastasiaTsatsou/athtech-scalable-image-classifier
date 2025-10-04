@@ -30,7 +30,9 @@ FROM python:3.11-slim as production
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PATH="/opt/venv/bin:$PATH"
+    PATH="/opt/venv/bin:$PATH" \
+    TORCH_HOME=/app/.torch \
+    HF_HOME=/app/.cache/huggingface
 
 # Install runtime dependencies only
 RUN apt-get update && apt-get install -y \
@@ -50,7 +52,7 @@ RUN groupadd -r appuser && useradd -r -g appuser appuser
 
 # Create app directory and set permissions
 WORKDIR /app
-RUN chown -R appuser:appuser /app
+RUN mkdir -p logs .torch .cache/huggingface && chown -R appuser:appuser /app
 
 # Copy application code
 COPY --chown=appuser:appuser app/ ./app/

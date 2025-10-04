@@ -31,8 +31,6 @@ structlog==23.2.0
 
 # Performance Testing
 locust==2.17.0
-wrk==0.0.0
-vegeta==0.0.0
 
 # Development
 black==23.11.0

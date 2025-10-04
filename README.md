@@ -51,6 +51,11 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+**Note:** For performance testing, you may also want to install external tools:
+- **wrk**: HTTP benchmarking tool (install separately)
+- **vegeta**: HTTP load testing tool (install separately)
+- **Locust**: Already included in requirements.txt
+
 ### 2. Run Tests
 
 ```bash

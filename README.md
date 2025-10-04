@@ -35,9 +35,19 @@ A scalable image classification service built with FastAPI, PyTorch, and contain
 
 ## Quick Start
 
-### 1. Install Dependencies
+### 1. Set up Virtual Environment
 
 ```bash
+# Create virtual environment
+python -m venv venv
+
+# Activate virtual environment
+# Windows:
+venv\Scripts\activate
+# Linux/Mac:
+source venv/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
 ```
 
@@ -50,6 +60,10 @@ pytest
 ### 3. Start the API Server
 
 ```bash
+# Local development
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+# Or using the main module
 python -m app.main
 ```
 
@@ -57,6 +71,16 @@ The API will be available at:
 - **API Base**: http://localhost:8000
 - **Interactive Docs**: http://localhost:8000/docs
 - **ReDoc**: http://localhost:8000/redoc
+
+### 4. Docker Deployment
+
+```bash
+# Build and run with Docker Compose (includes load balancer)
+docker-compose up -d
+
+# Access through load balancer
+curl http://localhost/api/v1/health
+```
 
 ## API Endpoints
 

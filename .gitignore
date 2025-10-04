@@ -58,5 +58,13 @@ uploads/
 .pytest_cache/
 htmlcov/
 
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
 # Docker
 .dockerignore

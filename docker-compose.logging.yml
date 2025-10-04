@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Elasticsearch
   elasticsearch:
@@ -73,6 +71,7 @@ services:
     depends_on:
       - logstash
     restart: unless-stopped
+    command: filebeat -e -strict.perms=false
 
   # Fluentd removed for now due to configuration issues
 

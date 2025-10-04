@@ -161,15 +161,17 @@ pytest tests/test_model.py
 ### Code Quality
 
 ```bash
-# Format code
-black app/ tests/
+# Format code (with 79 character line limit to match flake8)
+black app/ tests/ --line-length 79
 
 # Lint code
 flake8 app/ tests/
 
-# Type checking
-mypy app/
+# Type checking (ignore missing imports for external libraries)
+mypy app/ --ignore-missing-imports
 ```
+
+**Note:** The `--line-length 79` option for black ensures compatibility with flake8's default line length limit. The `--ignore-missing-imports` option for mypy prevents errors from external libraries that don't have type stubs.
 
 ## Next Steps
 

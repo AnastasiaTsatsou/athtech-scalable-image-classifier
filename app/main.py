@@ -2,7 +2,6 @@
 Main FastAPI application for Scalable Image Classifier
 """
 
-import logging
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -28,10 +27,12 @@ logger = get_logger(__name__)
 # Create FastAPI app
 app = FastAPI(
     title="Scalable Image Classifier",
-    description="A scalable image classification service using pretrained models",
+    description=(
+        "A scalable image classification service using pretrained models"
+    ),
     version="1.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
 )
 
 # Add CORS middleware
@@ -52,6 +53,7 @@ app.add_middleware(MetricsMiddleware)
 # Include API routes
 app.include_router(router, prefix="/api/v1")
 
+
 # Add root endpoint
 @app.get("/")
 async def root():
@@ -66,9 +68,10 @@ async def root():
             "classify": "/api/v1/classify",
             "model_info": "/api/v1/model/info",
             "docs": "/docs",
-            "metrics": "/metrics"
-        }
+            "metrics": "/metrics",
+        },
     }
+
 
 # Add metrics endpoint
 @app.get("/metrics")
@@ -85,7 +88,7 @@ async def global_exception_handler(request, exc):
     logger.error(f"Unhandled exception: {exc}")
     return JSONResponse(
         status_code=500,
-        content={"error": "Internal server error", "detail": str(exc)}
+        content={"error": "Internal server error", "detail": str(exc)},
     )
 
 
@@ -95,5 +98,5 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=8000,
         reload=True,
-        log_level="info"
+        log_level="info",
     )

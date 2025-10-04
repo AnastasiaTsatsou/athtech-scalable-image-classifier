@@ -78,7 +78,7 @@ class PerformanceBenchmark:
             test_start = time.time()
             
             # Select random image and top_k
-            image_bytes = test_images[time.time() % len(test_images)]
+            image_bytes = test_images[int(time.time()) % len(test_images)]
             top_k = 5
             
             result = self.tester.test_classify_endpoint(image_bytes, top_k)

@@ -43,18 +43,15 @@ class ImageGenerator:
     def create_test_image(width: int = 224, height: int = 224, 
                          color: str = "RGB", format: str = "JPEG") -> bytes:
         """Create a test image with random content"""
-        # Create a random image
-        image = Image.new(color, (width, height))
-        pixels = image.load()
+        import numpy as np
         
-        # Fill with random colors
-        for i in range(width):
-            for j in range(height):
-                pixels[i, j] = (
-                    random.randint(0, 255),
-                    random.randint(0, 255),
-                    random.randint(0, 255)
-                )
+        # Create a random image using numpy (more efficient)
+        if color == "RGB":
+            img_array = np.random.randint(0, 256, (height, width, 3), dtype=np.uint8)
+        else:
+            img_array = np.random.randint(0, 256, (height, width), dtype=np.uint8)
+        
+        image = Image.fromarray(img_array, mode=color)
         
         # Convert to bytes
         img_buffer = io.BytesIO()

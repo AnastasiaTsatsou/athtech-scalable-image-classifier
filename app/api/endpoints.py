@@ -142,18 +142,3 @@ async def get_model_info():
         )
 
 
-@router.get("/")
-async def root():
-    """
-    Root endpoint with API information
-    """
-    return {
-        "message": "Scalable Image Classifier API",
-        "version": "1.0.0",
-        "endpoints": {
-            "health": "/health",
-            "classify": "/classify",
-            "model_info": "/model/info",
-            "docs": "/docs"
-        }
-    }

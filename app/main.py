@@ -38,6 +38,23 @@ app.add_middleware(
 # Include API routes
 app.include_router(router, prefix="/api/v1")
 
+# Add root endpoint
+@app.get("/")
+async def root():
+    """
+    Root endpoint with API information
+    """
+    return {
+        "message": "Scalable Image Classifier API",
+        "version": "1.0.0",
+        "endpoints": {
+            "health": "/api/v1/health",
+            "classify": "/api/v1/classify",
+            "model_info": "/api/v1/model/info",
+            "docs": "/docs"
+        }
+    }
+
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):

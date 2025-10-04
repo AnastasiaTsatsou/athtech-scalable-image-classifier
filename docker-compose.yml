@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   nginx-lb:
     build:
@@ -30,7 +28,7 @@ services:
   image-classifier:
     build:
       context: .
-      dockerfile: Dockerfile.test
+      dockerfile: Dockerfile
     environment:
       - PYTHONPATH=/app
     healthcheck:

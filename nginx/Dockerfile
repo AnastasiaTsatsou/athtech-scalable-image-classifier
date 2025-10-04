@@ -4,9 +4,9 @@ FROM nginx:1.25-alpine
 # Copy custom nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Create nginx user and set permissions
-RUN addgroup -g 1001 -S nginx && \
-    adduser -S -D -H -u 1001 -h /var/cache/nginx -s /sbin/nologin -G nginx -g nginx nginx
+# Create nginx user and set permissions (if not exists)
+RUN addgroup -g 1001 -S nginx 2>/dev/null || true && \
+    adduser -S -D -H -u 1001 -h /var/cache/nginx -s /sbin/nologin -G nginx -g nginx nginx 2>/dev/null || true
 
 # Create necessary directories
 RUN mkdir -p /var/log/nginx /var/cache/nginx /tmp/nginx && \

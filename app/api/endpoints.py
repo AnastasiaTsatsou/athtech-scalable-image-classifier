@@ -15,7 +15,10 @@ from app.api.schemas import (
     ErrorResponse,
     PredictionResponse
 )
-from app.models.image_classifier import ImageClassifier
+try:
+    from app.models.image_classifier import ImageClassifier
+except ImportError:
+    from app.models.mock_classifier import MockImageClassifier as ImageClassifier
 
 logger = logging.getLogger(__name__)
 

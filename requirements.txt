@@ -3,15 +3,13 @@ fastapi==0.104.1
 uvicorn[standard]==0.24.0
 python-multipart==0.0.6
 
-# Machine Learning dependencies
+# Machine Learning dependencies (CPU-only versions for smaller images)
+--extra-index-url https://download.pytorch.org/whl/cpu
 torch==2.4.1
 torchvision==0.19.1
-tensorflow==2.16.1
+tensorflow-cpu==2.16.1
 pillow==10.4.0
 numpy==1.26.4
-opencv-python==4.10.0.84
-
-# Image processing
 opencv-python-headless==4.10.0.84
 
 # Utilities

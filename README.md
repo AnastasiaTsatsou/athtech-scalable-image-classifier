@@ -173,16 +173,18 @@ mypy app/ --ignore-missing-imports
 
 **Note:** The `--line-length 79` option for black ensures compatibility with flake8's default line length limit. The `--ignore-missing-imports` option for mypy prevents errors from external libraries that don't have type stubs.
 
-## Next Steps
+## Deployment Options
 
-This is the foundation for the scalable image classifier. Future development will include:
+This project includes comprehensive deployment options:
 
-1. **Docker containerization** with multi-stage builds
-2. **Kubernetes deployment** manifests
-3. **Load balancing** with Nginx
-4. **Monitoring** with Prometheus and Grafana
-5. **Logging** with ELK stack
-6. **Performance testing** and optimization
+1. **Docker containerization** with multi-stage builds ✅
+2. **Kubernetes deployment** manifests ✅
+3. **Load balancing** with Nginx ✅
+4. **Monitoring** with Prometheus and Grafana ✅
+5. **Logging** with ELK stack ✅
+6. **Performance testing** and optimization ✅
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment instructions.
 
 ## License
 

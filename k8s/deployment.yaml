@@ -19,8 +19,8 @@ spec:
     spec:
       containers:
       - name: image-classifier
-        image: scalable-image-classifier:latest
-        imagePullPolicy: IfNotPresent
+        image: athtech-scalable-image-classifier-image-classifier:latest
+        imagePullPolicy: Never
         ports:
         - containerPort: 8000
           name: http

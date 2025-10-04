@@ -52,7 +52,10 @@ RUN groupadd -r appuser && useradd -r -g appuser appuser
 
 # Create app directory and set permissions
 WORKDIR /app
-RUN mkdir -p logs .torch .cache/huggingface && chown -R appuser:appuser /app
+RUN mkdir -p logs .torch .cache/huggingface && \
+    touch logs/app.log && \
+    chmod -R 777 .torch .cache && \
+    chown -R appuser:appuser /app
 
 # Copy application code
 COPY --chown=appuser:appuser app/ ./app/

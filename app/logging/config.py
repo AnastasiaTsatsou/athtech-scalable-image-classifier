@@ -7,6 +7,7 @@ import logging.config
 import structlog
 import json
 import sys
+import os
 from typing import Any, Dict
 from datetime import datetime, timezone
 import traceback
@@ -119,6 +120,8 @@ def setup_logging(log_level: str = "INFO", log_format: str = "json") -> None:
         log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
         log_format: Log format (json, text)
     """
+    # Check if running in container (disable file logging)
+    is_container = os.path.exists("/.dockerenv") or os.environ.get("CONTAINER") == "true"
 
     # Configure structlog
     structlog.configure(
@@ -142,6 +145,33 @@ def setup_logging(log_level: str = "INFO", log_format: str = "json") -> None:
     )
 
     # Configure standard logging
+    handlers = {
+        "console": {
+            "class": "logging.StreamHandler",
+            "level": log_level,
+            "formatter": log_format,
+            "filters": ["context"],
+            "stream": sys.stdout,
+        },
+    }
+    
+    # Add file handler only if not in container
+    if not is_container:
+        handlers["file"] = {
+            "class": "logging.handlers.RotatingFileHandler",
+            "level": log_level,
+            "formatter": log_format,
+            "filters": ["context"],
+            "filename": "logs/app.log",
+            "maxBytes": 10485760,  # 10MB
+            "backupCount": 5,
+        }
+    
+    # Determine which handlers to use
+    handler_list = ["console"]
+    if not is_container:
+        handler_list.append("file")
+    
     logging_config = {
         "version": 1,
         "disable_existing_loggers": False,
@@ -161,42 +191,25 @@ def setup_logging(log_level: str = "INFO", log_format: str = "json") -> None:
                 "()": ContextFilter,
             }
         },
-        "handlers": {
-            "console": {
-                "class": "logging.StreamHandler",
-                "level": log_level,
-                "formatter": log_format,
-                "filters": ["context"],
-                "stream": sys.stdout,
-            },
-            "file": {
-                "class": "logging.handlers.RotatingFileHandler",
-                "level": log_level,
-                "formatter": log_format,
-                "filters": ["context"],
-                "filename": "logs/app.log",
-                "maxBytes": 10485760,  # 10MB
-                "backupCount": 5,
-            },
-        },
+        "handlers": handlers,
         "loggers": {
             "app": {
                 "level": log_level,
-                "handlers": ["console", "file"],
+                "handlers": handler_list,
                 "propagate": False,
             },
             "uvicorn": {
                 "level": "INFO",
-                "handlers": ["console", "file"],
+                "handlers": handler_list,
                 "propagate": False,
             },
             "uvicorn.access": {
                 "level": "INFO",
-                "handlers": ["console", "file"],
+                "handlers": handler_list,
                 "propagate": False,
             },
         },
-        "root": {"level": log_level, "handlers": ["console", "file"]},
+        "root": {"level": log_level, "handlers": handler_list},
     }
 
     logging.config.dictConfig(logging_config)

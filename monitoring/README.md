@@ -1,207 +1,196 @@
-# Monitoring Stack
+# 📊 Monitoring Setup
 
-This directory contains the monitoring configuration for the Scalable Image Classifier service using Prometheus and Grafana.
+This directory contains the complete monitoring infrastructure for the Image Classifier application using Prometheus and Grafana.
 
-## Components
-
-### Prometheus
-- **Purpose**: Metrics collection and storage
-- **Port**: 9090
-- **Configuration**: `prometheus.yml`
-- **Data**: Stored in persistent volume
-
-### Grafana
-- **Purpose**: Metrics visualization and dashboards
-- **Port**: 3000
-- **Default Credentials**: admin/admin
-- **Dashboards**: Pre-configured image classifier dashboard
-
-### Node Exporter
-- **Purpose**: System metrics collection
-- **Port**: 9100
-- **Metrics**: CPU, memory, disk, network usage
-
-### cAdvisor
-- **Purpose**: Container metrics collection
-- **Port**: 8080
-- **Metrics**: Container resource usage, performance
-
-## Quick Start
-
-### Using Docker Compose
+## 🚀 Quick Start
 
 ```bash
-# Start main application
-docker-compose up -d
-
 # Start monitoring stack
 docker-compose -f docker-compose.monitoring.yml up -d
 
-# Or use the convenience script
-./scripts/start-monitoring.sh
-```
-
-### Using Kubernetes
-
-```bash
-# Deploy monitoring stack
-kubectl apply -f k8s/monitoring/
-
 # Check status
-kubectl get pods -n monitoring
-
-# Port forward for access
-kubectl port-forward service/prometheus 9090:9090 -n monitoring
-kubectl port-forward service/grafana 3000:3000 -n monitoring
+docker-compose -f docker-compose.monitoring.yml ps
 ```
 
-## Access URLs
+## 🔗 Access URLs
 
-- **Application**: http://localhost
-- **Prometheus**: http://localhost:9090
-- **Grafana**: http://localhost:3000 (admin/admin)
-- **Node Exporter**: http://localhost:9100
-- **cAdvisor**: http://localhost:8080
+| Service | URL | Credentials |
+|---------|-----|-------------|
+| **Grafana** | http://localhost:3000 | admin/admin |
+| **Prometheus** | http://localhost:9090 | - |
+| **Node Exporter** | http://localhost:9100 | - |
+| **cAdvisor** | http://localhost:8080 | - |
+| **Nginx Exporter** | http://localhost:9113 | - |
 
-## Metrics Collected
+## 📁 Directory Structure
 
-### Application Metrics
-- HTTP request count and duration
-- Image classification count and duration
-- Classification confidence scores
-- Model loading time
-- Error rates
+```
+monitoring/
+├── prometheus.yml              # Prometheus configuration
+├── alert_rules.yml             # Alert rules for Prometheus
+├── grafana/
+│   ├── dashboards/
+│   │   ├── comprehensive-dashboard.json    # Main dashboard
+│   │   └── image-classifier-dashboard.json # Legacy dashboard
+│   └── provisioning/
+│       ├── datasources/
+│       │   └── prometheus.yml             # Prometheus datasource
+│       └── dashboards/
+│           └── dashboard.yml              # Dashboard provisioning
+└── README.md
+```
 
-### System Metrics
-- CPU usage
-- Memory usage
-- Disk I/O
-- Network I/O
-- Container resource usage
+## 🎯 Features
 
-### Custom Metrics
-- Image size distribution
-- Top-k prediction distribution
-- Model information
-- Active connections
+### **Comprehensive Dashboard**
+- **Service Overview**: Real-time status of all services
+- **Request Metrics**: Rate, response time, error rate
+- **Classification Metrics**: Model performance, confidence, duration
+- **System Resources**: CPU, memory usage
+- **Quick Links**: Direct access to related services
 
-## Grafana Dashboards
+### **Alerting**
+- **High Error Rate**: >5% error rate for 2 minutes
+- **High Response Time**: >2s 95th percentile for 5 minutes
+- **Service Down**: Service unavailable for 1 minute
+- **Resource Alerts**: High CPU/memory usage
+- **Low Confidence**: Classification confidence <30%
 
-### Image Classifier Service Dashboard
-- Request rate and response time
-- Classification metrics
-- Error rates
-- System resource usage
-- Custom application metrics
+### **Data Sources**
+- **Prometheus**: Metrics collection and storage
+- **Node Exporter**: System-level metrics
+- **cAdvisor**: Container metrics
+- **Nginx Exporter**: Load balancer metrics
 
-### Pre-configured Panels
-1. **Request Rate**: HTTP requests per second
-2. **Response Time**: 95th percentile response time
-3. **HTTP Requests**: Request distribution by endpoint
-4. **Image Classifications**: Classification rate by model
-5. **Classification Duration**: Processing time distribution
-6. **Classification Confidence**: Confidence score distribution
-7. **Image Size Distribution**: Uploaded image size metrics
-8. **Error Rate**: HTTP error percentage
-9. **Active Connections**: Current active connections
-10. **Memory Usage**: Application memory consumption
+## 🔧 Configuration
 
-## Configuration
+### **Prometheus Scraping**
+- **Image Classifier**: All Docker Compose and Kubernetes instances
+- **System Metrics**: Node exporter for host metrics
+- **Container Metrics**: cAdvisor for container performance
+- **Load Balancer**: Nginx exporter for traffic metrics
 
-### Prometheus Configuration
-Edit `prometheus.yml` to modify:
-- Scrape intervals
-- Target endpoints
-- Retention policies
-- Alert rules
+### **Grafana Dashboards**
+- **Auto-provisioned**: Dashboards loaded automatically
+- **Templated**: Variables for instance and model selection
+- **Linked**: Direct links to Prometheus, Kibana, and API docs
 
-### Grafana Configuration
-- Default admin password: `admin`
-- Dashboard auto-provisioning from `grafana/dashboards/`
-- Plugin installation configured
+## 📊 Key Metrics
 
-## Monitoring Best Practices
+### **Application Metrics**
+- `http_requests_total`: Total HTTP requests
+- `http_request_duration_seconds`: Request duration histogram
+- `image_classifications_total`: Classification events
+- `image_classification_duration_seconds`: Classification time
+- `image_classification_confidence`: Classification confidence
 
-### Alerting
-Set up alerts for:
-- High error rates (>5%)
-- High response times (>1s)
-- Low classification confidence (<0.5)
-- High memory usage (>80%)
+### **System Metrics**
+- `container_cpu_usage_seconds_total`: CPU usage
+- `container_memory_usage_bytes`: Memory usage
+- `node_filesystem_avail_bytes`: Disk space
+- `up`: Service availability
+
+## 🚨 Alerting
+
+### **Critical Alerts**
 - Service down
+- High error rate (>5%)
+- Elasticsearch cluster red
 
-### Dashboard Usage
-1. **Real-time Monitoring**: Use 5-minute refresh for live monitoring
-2. **Historical Analysis**: Use longer time ranges for trend analysis
-3. **Troubleshooting**: Filter by specific endpoints or time ranges
-4. **Performance Tuning**: Monitor metrics during load testing
+### **Warning Alerts**
+- High response time (>2s)
+- High resource usage (>80%)
+- Low classification confidence (<30%)
 
-### Metrics Interpretation
-- **Request Rate**: Should be stable under normal load
-- **Response Time**: Should be <500ms for 95th percentile
-- **Error Rate**: Should be <1% under normal conditions
-- **Memory Usage**: Should be stable, not continuously growing
-- **Classification Duration**: Should be consistent for same model
+## 🔗 Integration
 
-## Troubleshooting
+### **Cross-Service Links**
+- **Grafana → Prometheus**: Direct query links
+- **Grafana → Kibana**: Log analysis links
+- **Grafana → API Docs**: Application documentation
+- **Prometheus → Grafana**: Dashboard links
 
-### Common Issues
+### **External Links**
+- **API Documentation**: http://localhost:80/docs
+- **Health Check**: http://localhost:80/health
+- **Performance Testing**: http://localhost:8089
 
-1. **Prometheus not scraping metrics**
+## 🛠️ Troubleshooting
+
+### **Common Issues**
+
+1. **No metrics appearing**
    ```bash
    # Check Prometheus targets
    curl http://localhost:9090/api/v1/targets
    
-   # Check application metrics endpoint
-   curl http://localhost/metrics
+   # Check service health
+   docker-compose -f docker-compose.monitoring.yml ps
    ```
 
-2. **Grafana not loading dashboards**
+2. **Dashboard not loading**
    ```bash
-   # Check Grafana logs
-   docker-compose -f docker-compose.monitoring.yml logs grafana
+   # Restart Grafana
+   docker-compose -f docker-compose.monitoring.yml restart grafana
    
-   # Verify Prometheus data source
-   # Go to Grafana > Configuration > Data Sources
+   # Check logs
+   docker logs grafana
    ```
 
-3. **Missing metrics**
+3. **Alerts not firing**
    ```bash
-   # Check if metrics endpoint is accessible
-   curl http://localhost/metrics | grep image_classification
+   # Check alert rules
+   curl http://localhost:9090/api/v1/rules
    
-   # Verify Prometheus configuration
-   docker-compose -f docker-compose.monitoring.yml exec prometheus cat /etc/prometheus/prometheus.yml
+   # Check alertmanager (if configured)
+   curl http://localhost:9093/api/v1/alerts
    ```
 
-### Performance Tuning
+### **Useful Queries**
 
-1. **Prometheus Storage**
-   - Adjust retention time in `prometheus.yml`
-   - Monitor disk usage
-   - Consider external storage for production
+```promql
+# Request rate
+rate(http_requests_total[5m])
 
-2. **Grafana Performance**
-   - Limit dashboard refresh rates
-   - Use query optimization
-   - Monitor Grafana resource usage
+# Error rate
+rate(http_requests_total{status_code=~"5.."}[5m]) / rate(http_requests_total[5m]) * 100
 
-3. **Metrics Collection**
-   - Adjust scrape intervals based on needs
-   - Filter unnecessary metrics
-   - Use recording rules for complex queries
+# Response time 95th percentile
+histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))
 
-## Security Considerations
+# Classification rate
+rate(image_classifications_total[5m])
 
-- Change default Grafana admin password
-- Use HTTPS in production
-- Restrict network access to monitoring ports
-- Use authentication for Prometheus
-- Encrypt sensitive configuration data
+# Memory usage
+container_memory_usage_bytes{name=~".*image-classifier.*"}
+```
 
-## Integration with CI/CD
+## 📈 Performance Optimization
 
-- Include monitoring in deployment pipeline
-- Validate metrics collection after deployment
-- Set up automated alerting
-- Monitor deployment success metrics
+### **Retention Policies**
+- **Prometheus**: 200 hours (8.3 days)
+- **Grafana**: Unlimited (uses Prometheus data)
+
+### **Scrape Intervals**
+- **Application metrics**: 10s
+- **System metrics**: 15s
+- **Infrastructure metrics**: 30s
+
+## 🔒 Security
+
+### **Access Control**
+- **Grafana**: Basic auth (admin/admin)
+- **Prometheus**: No authentication (internal network)
+- **Exporters**: No authentication (internal network)
+
+### **Network Isolation**
+- All services run in `monitoring` network
+- No external access except configured ports
+- Internal service discovery via Docker DNS
+
+## 📚 Additional Resources
+
+- [Prometheus Documentation](https://prometheus.io/docs/)
+- [Grafana Documentation](https://grafana.com/docs/)
+- [Node Exporter](https://github.com/prometheus/node_exporter)
+- [cAdvisor](https://github.com/google/cadvisor)

@@ -1,39 +1,101 @@
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
+  external_labels:
+    cluster: 'image-classifier-cluster'
+    environment: 'development'
 
 rule_files:
-  # - "first_rules.yml"
-  # - "second_rules.yml"
+  - "alert_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
 
 scrape_configs:
   # Prometheus itself
   - job_name: 'prometheus'
     static_configs:
       - targets: ['localhost:9090']
+    scrape_interval: 15s
 
-  # Image Classifier Service
-  - job_name: 'image-classifier'
+  # Image Classifier Service (Docker Compose)
+  - job_name: 'image-classifier-docker'
     static_configs:
-      - targets: ['image-classifier:8000']
+      - targets: ['athtech-scalable-image-classifier-image-classifier-1:8000',
+                  'athtech-scalable-image-classifier-image-classifier-2:8000',
+                  'athtech-scalable-image-classifier-image-classifier-3:8000']
     metrics_path: '/metrics'
     scrape_interval: 10s
     scrape_timeout: 5s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        regex: '([^:]+):.*'
+        replacement: '${1}'
 
-  # Nginx Load Balancer (if nginx-prometheus-exporter is available)
-  - job_name: 'nginx'
+  # Image Classifier Service (Kubernetes)
+  - job_name: 'image-classifier-k8s'
+    kubernetes_sd_configs:
+      - role: pod
+        namespaces:
+          names:
+            - image-classifier
+    relabel_configs:
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        action: keep
+        regex: true
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        action: replace
+        target_label: __metrics_path__
+        regex: (.+)
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+        action: replace
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+        target_label: __address__
+      - action: labelmap
+        regex: __meta_kubernetes_pod_label_(.+)
+      - source_labels: [__meta_kubernetes_namespace]
+        action: replace
+        target_label: kubernetes_namespace
+      - source_labels: [__meta_kubernetes_pod_name]
+        action: replace
+        target_label: kubernetes_pod_name
+
+  # Nginx Load Balancer
+  - job_name: 'nginx-exporter'
     static_configs:
-      - targets: ['nginx-lb:9113']
+      - targets: ['nginx-exporter:9113']
     scrape_interval: 15s
+    metrics_path: '/metrics'
 
-  # Node Exporter (if available)
+  # Node Exporter (System Metrics)
   - job_name: 'node-exporter'
     static_configs:
       - targets: ['node-exporter:9100']
     scrape_interval: 15s
+    metrics_path: '/metrics'
 
-  # cAdvisor (if available)
+  # cAdvisor (Container Metrics)
   - job_name: 'cadvisor'
     static_configs:
       - targets: ['cadvisor:8080']
     scrape_interval: 15s
+    metrics_path: '/metrics'
+
+  # Elasticsearch (if monitoring is enabled)
+  - job_name: 'elasticsearch'
+    static_configs:
+      - targets: ['elasticsearch:9200']
+    metrics_path: '/_prometheus/metrics'
+    scrape_interval: 30s
+
+  # Logstash (if monitoring is enabled)
+  - job_name: 'logstash'
+    static_configs:
+      - targets: ['logstash:9600']
+    metrics_path: '/_node/stats/prometheus'
+    scrape_interval: 30s

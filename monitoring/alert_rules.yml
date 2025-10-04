@@ -1,0 +1,94 @@
+groups:
+  - name: image-classifier-alerts
+    rules:
+      # High Error Rate Alert
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status_code=~"5.."}[5m]) / rate(http_requests_total[5m]) * 100 > 5
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value }}% for {{ $labels.instance }}"
+
+      # High Response Time Alert
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High response time detected"
+          description: "95th percentile response time is {{ $value }}s for {{ $labels.instance }}"
+
+      # Service Down Alert
+      - alert: ServiceDown
+        expr: up{job=~"image-classifier.*"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Image classifier service is down"
+          description: "Service {{ $labels.instance }} has been down for more than 1 minute"
+
+      # High Memory Usage Alert
+      - alert: HighMemoryUsage
+        expr: (container_memory_usage_bytes{name=~".*image-classifier.*"} / container_spec_memory_limit_bytes) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is {{ $value }}% for {{ $labels.instance }}"
+
+      # High CPU Usage Alert
+      - alert: HighCPUUsage
+        expr: rate(container_cpu_usage_seconds_total{name=~".*image-classifier.*"}[5m]) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is {{ $value }}% for {{ $labels.instance }}"
+
+      # Low Classification Confidence Alert
+      - alert: LowClassificationConfidence
+        expr: histogram_quantile(0.50, image_classification_confidence_bucket) < 0.3
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low classification confidence detected"
+          description: "Median classification confidence is {{ $value }} for {{ $labels.model_name }}"
+
+  - name: infrastructure-alerts
+    rules:
+      # Node Exporter Down
+      - alert: NodeExporterDown
+        expr: up{job="node-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Node exporter is down"
+          description: "Node exporter {{ $labels.instance }} has been down for more than 1 minute"
+
+      # High Disk Usage
+      - alert: HighDiskUsage
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 < 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High disk usage detected"
+          description: "Disk usage is {{ $value }}% on {{ $labels.instance }}"
+
+      # Elasticsearch Cluster Health
+      - alert: ElasticsearchClusterRed
+        expr: elasticsearch_cluster_health_status{color="red"} == 1
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Elasticsearch cluster is red"
+          description: "Elasticsearch cluster health is red on {{ $labels.instance }}"

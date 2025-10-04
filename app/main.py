@@ -3,19 +3,27 @@ Main FastAPI application for Scalable Image Classifier
 """
 
 import logging
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import uvicorn
 
 from app.api.endpoints import router
+from app.monitoring.middleware import MetricsMiddleware
+from app.monitoring.metrics import metrics_collector
+from app.logging.config import setup_logging, get_logger
+from app.logging.middleware import LoggingMiddleware
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
+# Create logs directory
+os.makedirs("logs", exist_ok=True)
+
+# Configure structured logging
+log_level = os.getenv("LOG_LEVEL", "INFO")
+log_format = os.getenv("LOG_FORMAT", "json")
+setup_logging(log_level=log_level, log_format=log_format)
+
+logger = get_logger(__name__)
 
 # Create FastAPI app
 app = FastAPI(
@@ -35,6 +43,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Add logging middleware (first)
+app.add_middleware(LoggingMiddleware)
+
+# Add metrics middleware
+app.add_middleware(MetricsMiddleware)
+
 # Include API routes
 app.include_router(router, prefix="/api/v1")
 
@@ -51,9 +65,18 @@ async def root():
             "health": "/api/v1/health",
             "classify": "/api/v1/classify",
             "model_info": "/api/v1/model/info",
-            "docs": "/docs"
+            "docs": "/docs",
+            "metrics": "/metrics"
         }
     }
+
+# Add metrics endpoint
+@app.get("/metrics")
+async def metrics():
+    """
+    Prometheus metrics endpoint
+    """
+    return metrics_collector.get_metrics_response()
 
 
 @app.exception_handler(Exception)

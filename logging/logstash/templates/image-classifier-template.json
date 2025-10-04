@@ -1,0 +1,118 @@
+{
+  "index_patterns": ["image-classifier-logs-*"],
+  "template": {
+    "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 0,
+      "index.refresh_interval": "5s"
+    },
+    "mappings": {
+      "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
+        "timestamp": {
+          "type": "date"
+        },
+        "level": {
+          "type": "keyword"
+        },
+        "log_level": {
+          "type": "keyword"
+        },
+        "logger": {
+          "type": "keyword"
+        },
+        "message": {
+          "type": "text",
+          "analyzer": "standard"
+        },
+        "module": {
+          "type": "keyword"
+        },
+        "function": {
+          "type": "keyword"
+        },
+        "line": {
+          "type": "integer"
+        },
+        "thread": {
+          "type": "long"
+        },
+        "process": {
+          "type": "long"
+        },
+        "service": {
+          "type": "keyword"
+        },
+        "request_type": {
+          "type": "keyword"
+        },
+        "request_id": {
+          "type": "keyword"
+        },
+        "method": {
+          "type": "keyword"
+        },
+        "url": {
+          "type": "keyword"
+        },
+        "endpoint": {
+          "type": "keyword"
+        },
+        "status_code": {
+          "type": "integer"
+        },
+        "response_time": {
+          "type": "float"
+        },
+        "client_ip": {
+          "type": "ip"
+        },
+        "user_agent": {
+          "type": "text"
+        },
+        "model_name": {
+          "type": "keyword"
+        },
+        "confidence": {
+          "type": "float"
+        },
+        "processing_time": {
+          "type": "float"
+        },
+        "top_k": {
+          "type": "integer"
+        },
+        "image_size": {
+          "type": "integer"
+        },
+        "status": {
+          "type": "keyword"
+        },
+        "error_type": {
+          "type": "keyword"
+        },
+        "error_message": {
+          "type": "text"
+        },
+        "exception": {
+          "properties": {
+            "type": {
+              "type": "keyword"
+            },
+            "message": {
+              "type": "text"
+            },
+            "traceback": {
+              "type": "text"
+            }
+          }
+        },
+        "tags": {
+          "type": "keyword"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  # Performance testing with Locust
+  locust-master:
+    image: locustio/locust:latest
+    container_name: locust-master
+    ports:
+      - "8089:8089"
+    volumes:
+      - ./performance/locustfile.py:/mnt/locust/locustfile.py
+    command: >
+      locust -f /mnt/locust/locustfile.py
+      --host=http://image-classifier-service:8000
+      --master
+      --web-host=0.0.0.0
+    networks:
+      - performance
+    depends_on:
+      - image-classifier-service
+
+  locust-worker:
+    image: locustio/locust:latest
+    container_name: locust-worker
+    volumes:
+      - ./performance/locustfile.py:/mnt/locust/locustfile.py
+    command: >
+      locust -f /mnt/locust/locustfile.py
+      --host=http://image-classifier-service:8000
+      --worker
+      --master-host=locust-master
+    networks:
+      - performance
+    depends_on:
+      - image-classifier-service
+    deploy:
+      replicas: 2
+
+  # Performance monitoring
+  performance-monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile.performance
+    container_name: performance-monitor
+    volumes:
+      - ./performance:/app/performance
+      - ./performance/results:/app/results
+    environment:
+      - BASE_URL=http://image-classifier-service:8000
+    networks:
+      - performance
+    depends_on:
+      - image-classifier-service
+    command: >
+      python performance/benchmark.py
+      --url=http://image-classifier-service:8000
+      --test=comprehensive
+
+  # Image classifier service (for testing)
+  image-classifier-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: image-classifier-service
+    ports:
+      - "8000:8000"
+    environment:
+      - LOG_LEVEL=INFO
+      - LOG_FORMAT=json
+    networks:
+      - performance
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  performance:
+    driver: bridge

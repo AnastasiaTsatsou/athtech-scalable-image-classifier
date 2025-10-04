@@ -26,6 +26,8 @@ class ClassificationResponse(BaseModel):
     predictions: List[PredictionResponse] = Field(..., description="Top predictions")
     model_info: Dict[str, str] = Field(..., description="Model information")
     processing_time_ms: float = Field(..., description="Processing time in milliseconds")
+    
+    model_config = {"protected_namespaces": ()}
 
 
 class HealthResponse(BaseModel):
@@ -33,6 +35,8 @@ class HealthResponse(BaseModel):
     status: str = Field(..., description="Service status")
     model_loaded: bool = Field(..., description="Whether model is loaded")
     model_info: Optional[Dict[str, str]] = Field(None, description="Model information")
+    
+    model_config = {"protected_namespaces": ()}
 
 
 class ErrorResponse(BaseModel):

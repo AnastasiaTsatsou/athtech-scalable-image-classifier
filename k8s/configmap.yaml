@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: image-classifier-config
+  namespace: image-classifier
+data:
+  # Application configuration
+  PYTHONPATH: "/app"
+  PYTHONUNBUFFERED: "1"
+  PYTHONDONTWRITEBYTECODE: "1"
+  
+  # Model configuration
+  MODEL_NAME: "resnet50"
+  DEVICE: "cpu"
+  
+  # API configuration
+  API_HOST: "0.0.0.0"
+  API_PORT: "8000"
+  
+  # Logging configuration
+  LOG_LEVEL: "INFO"

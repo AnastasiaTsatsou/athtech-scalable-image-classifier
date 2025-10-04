@@ -75,15 +75,35 @@ kubectl port-forward service/image-classifier-service 8000:80 -n image-classifie
 
 **Access**: http://localhost:8000 (after port forward)
 
+### 5. Performance Testing Container
+
+```bash
+# Build performance testing image
+docker build -f Dockerfile.performance -t image-classifier-performance .
+
+# Run comprehensive performance tests
+docker run --rm image-classifier-performance
+
+# Run specific performance tests
+docker run --rm image-classifier-performance python performance/benchmark.py --test=load
+
+# Run with Docker Compose (includes load testing with Locust)
+docker-compose -f docker-compose.performance.yml up
+```
+
+**Features**:
+- Comprehensive benchmark suite (health, model info, classification, latency, memory, stress tests)
+- Locust load testing with web UI (http://localhost:8089)
+- Performance monitoring and visualization
+- Results saved to `performance/results/` directory
+
 ## Configuration
 
 ### Environment Variables
 
-- `MODEL_NAME`: Model to use (resnet50, resnet101, resnet152)
-- `DEVICE`: Device to run on (cpu, cuda)
-- `API_HOST`: API host (default: 0.0.0.0)
-- `API_PORT`: API port (default: 8000)
 - `LOG_LEVEL`: Logging level (default: INFO)
+- `LOG_FORMAT`: Log format (json or text, default: json)
+- `CONTAINER`: Set to "true" to disable file logging in containers
 
 ### Docker Compose Configuration
 
@@ -162,9 +182,9 @@ kubectl logs -f deployment/image-classifier -n image-classifier
 - Rate limiting prevents abuse
 - CORS is properly configured
 
-## Next Steps
+## Additional Features
 
-- Set up monitoring with Prometheus and Grafana
-- Implement centralized logging with ELK stack
-- Add performance testing and optimization
-- Create CI/CD pipeline for automated deployment
+- **Monitoring**: Prometheus and Grafana integration available
+- **Logging**: ELK stack (Elasticsearch, Logstash, Kibana) for centralized logging
+- **Performance Testing**: Comprehensive benchmarking and load testing tools
+- **Security**: Network policies, rate limiting, and security headers configured

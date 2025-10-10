@@ -4,6 +4,7 @@ A scalable image classification service built with FastAPI, PyTorch, and contain
 
 ## Features
 
+### Core Features
 - **FastAPI-based REST API** for image classification
 - **Pretrained ResNet models** (ResNet50, ResNet101, ResNet152)
 - **Docker containerization** with multi-stage builds
@@ -11,29 +12,189 @@ A scalable image classification service built with FastAPI, PyTorch, and contain
 - **API documentation** with automatic OpenAPI/Swagger docs
 - **Health checks** and monitoring endpoints
 
+### Additional Features
+- **Load balancing** with Nginx for high availability
+- **Monitoring** with Prometheus metrics and Grafana dashboards
+- **Logging** with OpenSearch stack for centralized log management
+- **Performance testing** with Locust for load testing
+- **Kubernetes deployment** manifests for cloud deployment
+- **Code quality tools** (black, flake8, mypy) for maintainable code
+
 ## Project Structure
 
 ```
-├── app/
+├── app/                       # Main application code
 │   ├── __init__.py
-│   ├── main.py                 # FastAPI application
-│   ├── api/
+│   ├── main.py               # FastAPI application
+│   ├── api/                  # API layer
 │   │   ├── __init__.py
-│   │   ├── endpoints.py        # API endpoints
-│   │   └── schemas.py          # Pydantic models
-│   └── models/
+│   │   ├── endpoints.py      # API endpoints
+│   │   └── schemas.py        # Pydantic models
+│   ├── models/               # ML models
+│   │   ├── __init__.py
+│   │   ├── image_classifier.py
+│   │   └── mock_classifier.py
+│   ├── logging/              # Logging configuration
+│   │   ├── __init__.py
+│   │   ├── config.py
+│   │   └── middleware.py
+│   └── monitoring/           # Monitoring and metrics
 │       ├── __init__.py
-│       └── image_classifier.py # ML model implementation
-├── tests/
+│       ├── metrics.py
+│       └── middleware.py
+├── tests/                    # Test suite
 │   ├── __init__.py
-│   ├── test_model.py          # Model unit tests
-│   └── test_api.py            # API unit tests
-├── requirements.txt           # Python dependencies
-├── pytest.ini                # Test configuration
-└── README.md                 # This file
+│   ├── test_model.py
+│   └── test_api.py
+├── k8s/                      # Kubernetes manifests
+│   ├── deployment.yaml
+│   ├── service.yaml
+│   ├── configmap.yaml
+│   ├── hpa.yaml
+│   ├── ingress.yaml
+│   ├── network-policy.yaml
+│   └── namespace.yaml
+├── monitoring/               # Monitoring stack
+│   ├── prometheus.yml
+│   ├── alert_rules.yml
+│   └── grafana/
+├── logging/                  # Logging stack
+│   └── opensearch/
+├── nginx/                    # Load balancer config
+│   └── nginx.conf
+├── performance/              # Performance testing
+│   ├── benchmark.py
+│   └── load_tests.py
+├── requirements.txt          # Python dependencies
+├── pytest.ini              # Test configuration
+├── docker-compose.yml       # Basic deployment
+├── docker-compose.monitoring.yml  # With monitoring
+├── docker-compose.opensearch.yml  # With logging
+├── Dockerfile               # Main application image
+├── Dockerfile.performance   # Performance testing image
+└── README.md               # This file
 ```
 
 ## Quick Start
+
+### Option 1: Docker Deployment (Recommended)
+
+```bash
+# Basic deployment (nginx + image classifier)
+docker-compose up -d --build
+
+# With monitoring (Prometheus + Grafana)
+docker-compose up -d --build
+docker-compose -f docker-compose.monitoring.yml up -d
+
+# With logging (OpenSearch)
+docker-compose up -d --build
+docker-compose -f docker-compose.opensearch.yml up -d
+
+# Full stack (everything)
+docker-compose up -d --build
+docker-compose -f docker-compose.monitoring.yml up -d
+docker-compose -f docker-compose.opensearch.yml up -d
+```
+
+**Access points:**
+- **Main API**: http://localhost (through nginx load balancer)
+- **API Documentation**: http://localhost/docs
+
+### Option 2: Kubernetes Deployment
+
+```bash
+# Basic deployment (image classifier only)
+kubectl apply -f k8s/
+
+# With monitoring (Prometheus + Grafana)
+kubectl apply -f k8s/monitoring/
+
+# With logging (OpenSearch)
+kubectl apply -f k8s/logging/
+
+# Full stack (deploy all components)
+kubectl apply -f k8s/
+kubectl apply -f k8s/monitoring/
+kubectl apply -f k8s/logging/
+
+# Port forwarding for local access (run in separate terminals)
+kubectl port-forward svc/image-classifier-service 80:80
+kubectl port-forward svc/grafana-service 3000:3000 -n monitoring
+kubectl port-forward svc/prometheus-service 9090:9090 -n monitoring
+kubectl port-forward svc/opensearch-dashboards 5601:5601 -n logging
+kubectl port-forward svc/opensearch 9200:9200 -n logging
+```
+
+**Access points:**
+- **Main API**: http://localhost (through ingress or port-forward)
+- **API Documentation**: http://localhost/docs
+- **Grafana**: http://localhost:3000 (admin/admin) - when monitoring is deployed
+- **Prometheus**: http://localhost:9090 - when monitoring is deployed
+- **OpenSearch Dashboards**: http://localhost:5601 (admin/admin) - when logging is deployed
+- **OpenSearch**: http://localhost:9200 - when logging is deployed
+
+**Note:** For Kubernetes deployment, you may need to set up port forwarding or ingress rules to access services locally.
+
+### Stopping Services
+
+```bash
+# Stop Docker services
+docker-compose down
+docker-compose -f docker-compose.monitoring.yml down
+docker-compose -f docker-compose.opensearch.yml down
+
+# Stop Kubernetes services
+kubectl delete -f k8s/
+kubectl delete -f k8s/monitoring/
+kubectl delete -f k8s/logging/
+```
+
+## Deployment Options
+
+This project includes comprehensive deployment options:
+
+### Basic Deployment
+- **Docker containerization** with multi-stage builds ✅
+- **Load balancing** with Nginx ✅
+- **Health checks** and monitoring endpoints ✅
+
+### Advanced Deployment
+- **Kubernetes deployment** manifests ✅
+- **Monitoring** with Prometheus and Grafana ✅
+- **Logging** with OpenSearch stack ✅
+- **Performance testing** and optimization ✅
+
+### Access Points by Deployment Type
+
+**Basic Deployment:**
+- Main API: http://localhost
+- API Documentation: http://localhost/docs
+
+**With Monitoring:**
+- Main API: http://localhost
+- API Documentation: http://localhost/docs
+- Grafana: http://localhost:3000 (admin/admin)
+- Prometheus: http://localhost:9090
+
+**With Logging:**
+- Main API: http://localhost
+- API Documentation: http://localhost/docs
+- OpenSearch Dashboards: http://localhost:5601 (admin/admin)
+- OpenSearch: http://localhost:9200
+
+**Kubernetes Deployment:**
+- Main API: http://localhost (through ingress)
+- API Documentation: http://localhost/docs
+- Grafana: http://localhost:3000 (admin/admin) - when monitoring deployed
+- Prometheus: http://localhost:9090 - when monitoring deployed
+- OpenSearch Dashboards: http://localhost:5601 (admin/admin) - when logging deployed
+- OpenSearch: http://localhost:9200 - when logging deployed
+
+**Full Stack:**
+- All of the above services running simultaneously
+
+## Local Development
 
 ### 1. Set up Virtual Environment
 
@@ -79,13 +240,7 @@ The API will be available at:
 
 ### 4. Docker Deployment
 
-```bash
-# Build and run with Docker Compose (includes load balancer)
-docker-compose up -d
-
-# Access through load balancer
-curl http://localhost/api/v1/health
-```
+For Docker deployment options, see the [Deployment Options](#deployment-options) section above.
 
 ## API Endpoints
 
@@ -114,11 +269,21 @@ GET /api/v1/model/info
 ### Using curl
 
 ```bash
-# Health check
+# Health check (local development)
 curl http://localhost:8000/api/v1/health
 
-# Classify an image
+# Health check (Docker deployment)
+curl http://localhost/api/v1/health
+
+# Classify an image (local development)
 curl -X POST "http://localhost:8000/api/v1/classify" \
+     -H "accept: application/json" \
+     -H "Content-Type: multipart/form-data" \
+     -F "file=@path/to/your/image.jpg" \
+     -F "top_k=5"
+
+# Classify an image (Docker deployment)
+curl -X POST "http://localhost/api/v1/classify" \
      -H "accept: application/json" \
      -H "Content-Type: multipart/form-data" \
      -F "file=@path/to/your/image.jpg" \
@@ -130,10 +295,18 @@ curl -X POST "http://localhost:8000/api/v1/classify" \
 ```python
 import requests
 
-# Classify an image
+# Classify an image (local development)
 with open('image.jpg', 'rb') as f:
     response = requests.post(
         'http://localhost:8000/api/v1/classify',
+        files={'file': f},
+        data={'top_k': 5}
+    )
+
+# Classify an image (Docker deployment)
+with open('image.jpg', 'rb') as f:
+    response = requests.post(
+        'http://localhost/api/v1/classify',
         files={'file': f},
         data={'top_k': 5}
     )
@@ -173,18 +346,30 @@ mypy app/ --ignore-missing-imports
 
 **Note:** The `--line-length 79` option for black ensures compatibility with flake8's default line length limit. The `--ignore-missing-imports` option for mypy prevents errors from external libraries that don't have type stubs.
 
-## Deployment Options
+### Troubleshooting
 
-This project includes comprehensive deployment options:
+**Common Issues:**
 
-1. **Docker containerization** with multi-stage builds ✅
-2. **Kubernetes deployment** manifests ✅
-3. **Load balancing** with Nginx ✅
-4. **Monitoring** with Prometheus and Grafana ✅
-5. **Logging** with ELK stack ✅
-6. **Performance testing** and optimization ✅
+1. **Port conflicts**: Ensure ports 80, 3000, 5601, 9090, 9200 are available
+2. **Memory issues**: Ensure Docker has sufficient memory allocated (recommended: 4GB+)
+3. **Container restart loops**: Check logs with `docker logs <container-name>`
+4. **Network issues**: Ensure all services are on the same Docker network
 
-See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment instructions.
+**Useful Commands:**
+
+```bash
+# Check container status
+docker ps -a
+
+# View logs
+docker logs <container-name>
+
+# Check resource usage
+docker stats
+
+# Clean up unused resources
+docker system prune -a
+```
 
 ## License
 

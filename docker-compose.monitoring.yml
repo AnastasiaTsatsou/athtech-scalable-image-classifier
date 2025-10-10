@@ -18,6 +18,7 @@ services:
     restart: unless-stopped
     networks:
       - monitoring
+      - default
 
   # Grafana
   grafana:
@@ -27,16 +28,17 @@ services:
       - "3000:3000"
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/dashboards:/etc/grafana/dashboards
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false
-      - GF_INSTALL_PLUGINS=grafana-piechart-panel,grafana-clock-panel
-      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/comprehensive-dashboard.json
+      - GF_INSTALL_PLUGINS=grafana-clock-panel
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/dashboards/scalability-monitoring-dashboard.json
     restart: unless-stopped
     networks:
       - monitoring
+      - default
     depends_on:
       - prometheus
 
@@ -99,3 +101,6 @@ volumes:
 networks:
   monitoring:
     driver: bridge
+  default:
+    external: true
+    name: athtech-scalable-image-classifier_default

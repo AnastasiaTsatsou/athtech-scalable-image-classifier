@@ -31,6 +31,7 @@ structlog==23.2.0
 
 # Performance Testing
 locust==2.17.0
+aiohttp==3.9.1
 
 # Development
 black==23.11.0

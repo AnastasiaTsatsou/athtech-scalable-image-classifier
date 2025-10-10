@@ -139,7 +139,7 @@ class LoadTester:
         """Test image classification endpoint"""
         start_time = time.time()
         try:
-            files = {'image': ('test_image.jpg', image_bytes, 'image/jpeg')}
+            files = {'file': ('test_image.jpg', image_bytes, 'image/jpeg')}
             data = {'top_k': top_k}
             
             response = requests.post(

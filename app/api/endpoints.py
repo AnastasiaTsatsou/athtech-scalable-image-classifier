@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 # Initialize router
 router = APIRouter()
 
-# Global model instance
+# Global classifier instance
 classifier = None
 
 
@@ -34,8 +34,19 @@ def get_classifier() -> ImageClassifier:
     """Get or initialize the classifier instance"""
     global classifier
     if classifier is None:
-        classifier = ImageClassifier()
+        logger.info("Loading ResNet50 model...")
+        classifier = ImageClassifier(model_name="resnet50")
+        logger.info("✅ ResNet50 loaded successfully")
     return classifier
+
+
+# Pre-load the model at startup
+logger.info("Pre-loading ResNet50 model...")
+try:
+    get_classifier()
+    logger.info("✅ Model pre-loaded successfully")
+except Exception as e:
+    logger.error(f"❌ Failed to pre-load model: {e}")
 
 
 @router.get("/health", response_model=HealthResponse)
@@ -132,7 +143,7 @@ async def classify_image(
 @router.get("/model/info")
 async def get_model_info():
     """
-    Get information about the loaded model
+    Get information about the currently loaded model
     """
     try:
         clf = get_classifier()

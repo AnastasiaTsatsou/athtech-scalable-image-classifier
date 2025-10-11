@@ -15,7 +15,7 @@ A scalable image classification service built with FastAPI, PyTorch, and contain
 ### Additional Features
 - **Load balancing** with Nginx for high availability
 - **Monitoring** with Prometheus metrics and Grafana dashboards
-- **Logging** with OpenSearch stack for centralized log management
+- **Logging** with ELK stack (Elasticsearch, Logstash, Kibana) for centralized log management
 - **Performance testing** with Locust for load testing
 - **Kubernetes deployment** manifests for cloud deployment
 - **Code quality tools** (black, flake8, mypy) for maintainable code
@@ -59,7 +59,9 @@ A scalable image classification service built with FastAPI, PyTorch, and contain
 │   ├── alert_rules.yml
 │   └── grafana/
 ├── logging/                  # Logging stack
-│   └── opensearch/
+│   ├── kibana/              # Kibana configuration
+│   ├── logstash/            # Logstash configuration
+│   └── filebeat/            # Filebeat configuration
 ├── nginx/                    # Load balancer config
 │   └── nginx.conf
 ├── performance/              # Performance testing
@@ -67,9 +69,9 @@ A scalable image classification service built with FastAPI, PyTorch, and contain
 │   └── load_tests.py
 ├── requirements.txt          # Python dependencies
 ├── pytest.ini              # Test configuration
-├── docker-compose.yml       # Basic deployment
-├── docker-compose.monitoring.yml  # With monitoring
-├── docker-compose.opensearch.yml  # With logging
+├── docker-compose.yml       # Complete deployment (ELK + App + Monitoring)
+├── docker-compose.monitoring.yml  # Monitoring stack only
+├── docker-compose.performance.yml  # Performance testing
 ├── Dockerfile               # Main application image
 ├── Dockerfile.performance   # Performance testing image
 └── README.md               # This file
@@ -80,26 +82,23 @@ A scalable image classification service built with FastAPI, PyTorch, and contain
 ### Option 1: Docker Deployment (Recommended)
 
 ```bash
-# Basic deployment (nginx + image classifier)
+# Complete deployment (ELK + App + Monitoring)
 docker-compose up -d --build
 
-# With monitoring (Prometheus + Grafana)
-docker-compose up -d --build
+# Monitoring only (if you want to run separately)
 docker-compose -f docker-compose.monitoring.yml up -d
 
-# With logging (OpenSearch)
-docker-compose up -d --build
-docker-compose -f docker-compose.opensearch.yml up -d
-
-# Full stack (everything)
-docker-compose up -d --build
-docker-compose -f docker-compose.monitoring.yml up -d
-docker-compose -f docker-compose.opensearch.yml up -d
+# Performance testing
+docker-compose -f docker-compose.performance.yml up -d
 ```
 
 **Access points:**
 - **Main API**: http://localhost (through nginx load balancer)
 - **API Documentation**: http://localhost/docs
+- **Kibana Dashboard**: http://localhost:5601
+- **Elasticsearch**: http://localhost:9200
+- **Grafana**: http://localhost:3000 (admin/admin)
+- **Prometheus**: http://localhost:9090
 
 ### Option 2: Kubernetes Deployment
 
@@ -110,7 +109,7 @@ kubectl apply -f k8s/
 # With monitoring (Prometheus + Grafana)
 kubectl apply -f k8s/monitoring/
 
-# With logging (OpenSearch)
+# With logging (ELK Stack)
 kubectl apply -f k8s/logging/
 
 # Full stack (deploy all components)
@@ -122,8 +121,8 @@ kubectl apply -f k8s/logging/
 kubectl port-forward svc/image-classifier-service 80:80
 kubectl port-forward svc/grafana-service 3000:3000 -n monitoring
 kubectl port-forward svc/prometheus-service 9090:9090 -n monitoring
-kubectl port-forward svc/opensearch-dashboards 5601:5601 -n logging
-kubectl port-forward svc/opensearch 9200:9200 -n logging
+kubectl port-forward svc/kibana-service 5601:5601 -n logging
+kubectl port-forward svc/elasticsearch-service 9200:9200 -n logging
 ```
 
 **Access points:**
@@ -131,8 +130,8 @@ kubectl port-forward svc/opensearch 9200:9200 -n logging
 - **API Documentation**: http://localhost/docs
 - **Grafana**: http://localhost:3000 (admin/admin) - when monitoring is deployed
 - **Prometheus**: http://localhost:9090 - when monitoring is deployed
-- **OpenSearch Dashboards**: http://localhost:5601 (admin/admin) - when logging is deployed
-- **OpenSearch**: http://localhost:9200 - when logging is deployed
+- **Kibana Dashboard**: http://localhost:5601 - when logging is deployed
+- **Elasticsearch**: http://localhost:9200 - when logging is deployed
 
 **Note:** For Kubernetes deployment, you may need to set up port forwarding or ingress rules to access services locally.
 
@@ -142,7 +141,6 @@ kubectl port-forward svc/opensearch 9200:9200 -n logging
 # Stop Docker services
 docker-compose down
 docker-compose -f docker-compose.monitoring.yml down
-docker-compose -f docker-compose.opensearch.yml down
 
 # Stop Kubernetes services
 kubectl delete -f k8s/
@@ -162,7 +160,7 @@ This project includes comprehensive deployment options:
 ### Advanced Deployment
 - **Kubernetes deployment** manifests ✅
 - **Monitoring** with Prometheus and Grafana ✅
-- **Logging** with OpenSearch stack ✅
+- **Logging** with ELK stack (Elasticsearch, Logstash, Kibana) ✅
 - **Performance testing** and optimization ✅
 
 ### Access Points by Deployment Type
@@ -180,16 +178,16 @@ This project includes comprehensive deployment options:
 **With Logging:**
 - Main API: http://localhost
 - API Documentation: http://localhost/docs
-- OpenSearch Dashboards: http://localhost:5601 (admin/admin)
-- OpenSearch: http://localhost:9200
+- Kibana Dashboard: http://localhost:5601
+- Elasticsearch: http://localhost:9200
 
 **Kubernetes Deployment:**
 - Main API: http://localhost (through ingress)
 - API Documentation: http://localhost/docs
 - Grafana: http://localhost:3000 (admin/admin) - when monitoring deployed
 - Prometheus: http://localhost:9090 - when monitoring deployed
-- OpenSearch Dashboards: http://localhost:5601 (admin/admin) - when logging deployed
-- OpenSearch: http://localhost:9200 - when logging deployed
+- Kibana Dashboard: http://localhost:5601 - when logging deployed
+- Elasticsearch: http://localhost:9200 - when logging deployed
 
 **Full Stack:**
 - All of the above services running simultaneously

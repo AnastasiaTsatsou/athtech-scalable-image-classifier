@@ -2,6 +2,7 @@ filebeat.inputs:
 - type: log
   enabled: true
   paths:
+    - /var/log/app/*.log
     - /app/logs/*.log
   fields:
     service: image-classifier
@@ -11,13 +12,14 @@ filebeat.inputs:
   multiline.negate: true
   multiline.match: after
 
-- type: container
-  enabled: true
-  paths:
-    - '/var/lib/docker/containers/*/*.log'
-  processors:
-  - add_docker_metadata:
-      host: "unix:///var/run/docker.sock"
+# Docker container logs removed to reduce log volume
+# - type: container
+#   enabled: true
+#   paths:
+#     - '/var/lib/docker/containers/*/*.log'
+#   processors:
+#   - add_docker_metadata:
+#       host: "unix:///var/run/docker.sock"
 
 processors:
 - add_host_metadata:

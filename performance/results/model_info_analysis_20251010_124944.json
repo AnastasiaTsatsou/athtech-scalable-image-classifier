@@ -1,0 +1,16 @@
+{
+  "total_requests": 591,
+  "successful_requests": 300,
+  "failed_requests": 291,
+  "success_rate": 0.5076142131979695,
+  "avg_response_time": 0.0141375732421875,
+  "min_response_time": 0.004004240036010742,
+  "max_response_time": 0.04308199882507324,
+  "median_response_time": 0.014045357704162598,
+  "p95_response_time": 0.028474807739257812,
+  "p99_response_time": 0.029952526092529297,
+  "requests_per_second": 19.73286969881965,
+  "error_breakdown": {
+    "HTTP_503": 291
+  }
+}

@@ -1,0 +1,47 @@
+[
+  {
+    "endpoint": "/api/v1/classify",
+    "method": "POST",
+    "status_code": 200,
+    "response_time": 14.72557258605957,
+    "success": true,
+    "error_message": null,
+    "timestamp": "2025-10-10T12:49:59.137782"
+  },
+  {
+    "endpoint": "/api/v1/classify",
+    "method": "POST",
+    "status_code": 200,
+    "response_time": 11.618144512176514,
+    "success": true,
+    "error_message": null,
+    "timestamp": "2025-10-10T12:50:10.755927"
+  },
+  {
+    "endpoint": "/api/v1/classify",
+    "method": "POST",
+    "status_code": 200,
+    "response_time": 12.887524604797363,
+    "success": true,
+    "error_message": null,
+    "timestamp": "2025-10-10T12:50:23.644956"
+  },
+  {
+    "endpoint": "/api/v1/classify",
+    "method": "POST",
+    "status_code": 200,
+    "response_time": 15.096879959106445,
+    "success": true,
+    "error_message": null,
+    "timestamp": "2025-10-10T12:50:38.741835"
+  },
+  {
+    "endpoint": "/api/v1/classify",
+    "method": "POST",
+    "status_code": 200,
+    "response_time": 7.030183792114258,
+    "success": true,
+    "error_message": null,
+    "timestamp": "2025-10-10T12:50:45.772019"
+  }
+]

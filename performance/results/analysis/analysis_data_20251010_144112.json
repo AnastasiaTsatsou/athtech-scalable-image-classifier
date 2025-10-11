@@ -1,0 +1,51 @@
+{
+  "test_summary": {
+    "health": {
+      "total_tests": 4,
+      "latest_success_rate": 0.5414551607445008,
+      "latest_avg_response_time": 0.013328326493501663,
+      "latest_p95_response_time": 0.027748584747314453,
+      "latest_requests_per_second": 19.724123918493913
+    },
+    "model_info": {
+      "total_tests": 2,
+      "latest_success_rate": 0.5076142131979695,
+      "latest_avg_response_time": 0.0141375732421875,
+      "latest_p95_response_time": 0.028474807739257812,
+      "latest_requests_per_second": 19.73286969881965
+    },
+    "classification": {
+      "total_tests": 2,
+      "latest_success_rate": 1.0,
+      "latest_avg_response_time": 12.27166109085083,
+      "latest_p95_response_time": 15.096879959106445,
+      "latest_requests_per_second": 0.1072173647871627
+    },
+    "latency": {
+      "total_tests": 2,
+      "latest_success_rate": 1.0,
+      "latest_avg_response_time": 8.81195528268814,
+      "latest_p95_response_time": 15.019143104553223,
+      "latest_requests_per_second": 0.11475377960851776
+    },
+    "memory": {
+      "total_tests": 2,
+      "latest_success_rate": 1.0,
+      "latest_avg_response_time": 9.797560119628907,
+      "latest_p95_response_time": 17.19383668899536,
+      "latest_requests_per_second": 0.10356529085583872
+    },
+    "stress": {
+      "total_tests": 2,
+      "latest_success_rate": 0.9285714285714286,
+      "latest_avg_response_time": 9.556068068284254,
+      "latest_p95_response_time": 24.337385654449463,
+      "latest_requests_per_second": 0.35318713242806027
+    }
+  },
+  "performance_trends": {},
+  "recommendations": [
+    "Classification response time is high (>10s). Consider model optimization or hardware upgrade.",
+    "Stress test success rate is below 95%. Review error handling and resource limits."
+  ]
+}

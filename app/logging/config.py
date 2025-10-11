@@ -19,7 +19,7 @@ class JSONFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         log_entry = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "level": record.levelname,
+            "level": record.levelname.lower(),
             "logger": record.name,
             "message": record.getMessage(),
             "module": record.module,
@@ -155,22 +155,20 @@ def setup_logging(log_level: str = "INFO", log_format: str = "json") -> None:
         },
     }
     
-    # Add file handler only if not in container
-    if not is_container:
-        handlers["file"] = {
-            "class": "logging.handlers.RotatingFileHandler",
-            "level": log_level,
-            "formatter": log_format,
-            "filters": ["context"],
-            "filename": "logs/app.log",
-            "maxBytes": 10485760,  # 10MB
-            "backupCount": 5,
-        }
+    # Add file handler for ELK stack
+    handlers["file"] = {
+        "class": "logging.handlers.RotatingFileHandler",
+        "level": log_level,
+        "formatter": log_format,
+        "filters": ["context"],
+        "filename": "logs/app.log",
+        "maxBytes": 10485760,  # 10MB
+        "backupCount": 5,
+    }
     
     # Determine which handlers to use
     handler_list = ["console"]
-    if not is_container:
-        handler_list.append("file")
+    handler_list.append("file")  # Always use file handler for ELK stack
     
     logging_config = {
         "version": 1,

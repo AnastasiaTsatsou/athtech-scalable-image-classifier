@@ -1,0 +1,56 @@
+[
+  {
+    "endpoint": "/api/v1/classify",
+    "method": "POST",
+    "status_code": 200,
+    "response_time": 10.042090892791748,
+    "success": true,
+    "error_message": null,
+    "timestamp": "2025-10-10T15:53:08.397505"
+  },
+  {
+    "endpoint": "/api/v1/classify",
+    "method": "POST",
+    "status_code": 200,
+    "response_time": 17.29692816734314,
+    "success": true,
+    "error_message": null,
+    "timestamp": "2025-10-10T15:53:25.694433"
+  },
+  {
+    "endpoint": "/api/v1/classify",
+    "method": "POST",
+    "status_code": 200,
+    "response_time": 4.8277747631073,
+    "success": true,
+    "error_message": null,
+    "timestamp": "2025-10-10T15:53:30.523713"
+  },
+  {
+    "endpoint": "/api/v1/classify",
+    "method": "POST",
+    "status_code": 200,
+    "response_time": 15.831440448760986,
+    "success": true,
+    "error_message": null,
+    "timestamp": "2025-10-10T15:53:46.355154"
+  },
+  {
+    "endpoint": "/api/v1/classify",
+    "method": "POST",
+    "status_code": 200,
+    "response_time": 6.933416366577148,
+    "success": true,
+    "error_message": null,
+    "timestamp": "2025-10-10T15:53:53.288570"
+  },
+  {
+    "endpoint": "/api/v1/classify",
+    "method": "POST",
+    "status_code": 200,
+    "response_time": 19.39916706085205,
+    "success": true,
+    "error_message": null,
+    "timestamp": "2025-10-10T15:54:12.687737"
+  }
+]

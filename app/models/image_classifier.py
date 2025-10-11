@@ -76,6 +76,18 @@ class ImageClassifier:
                 self.model = models.resnet152(
                     weights=models.ResNet152_Weights.IMAGENET1K_V1
                 )
+            elif self.model_name == "efficientnet_b0":
+                self.model = models.efficientnet_b0(
+                    weights=models.EfficientNet_B0_Weights.IMAGENET1K_V1
+                )
+            elif self.model_name == "efficientnet_b1":
+                self.model = models.efficientnet_b1(
+                    weights=models.EfficientNet_B1_Weights.IMAGENET1K_V1
+                )
+            elif self.model_name == "efficientnet_b2":
+                self.model = models.efficientnet_b2(
+                    weights=models.EfficientNet_B2_Weights.IMAGENET1K_V1
+                )
             else:
                 raise ValueError(f"Unsupported model: {self.model_name}")
 

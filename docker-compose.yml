@@ -1,4 +1,87 @@
 services:
+  # ELK Stack - Logging Infrastructure
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: elasticsearch
+    environment:
+      - cluster.name=elasticsearch-cluster
+      - node.name=elasticsearch-node1
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+      - xpack.security.enrollment.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - xpack.security.transport.ssl.enabled=false
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      - elk
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  kibana:
+    build:
+      context: ./logging/kibana
+      dockerfile: Dockerfile
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - xpack.security.enabled=false
+      - xpack.encryptedSavedObjects.encryptionKey=fhjskloppd678ehkdfdlliverpoolfcr
+    networks:
+      - elk
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    restart: unless-stopped
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.11.0
+    container_name: logstash
+    volumes:
+      - ./logging/logstash/config/pipelines.yml:/usr/share/logstash/config/pipelines.yml
+      - ./logging/logstash/pipeline/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+      - ./logging/logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml
+    ports:
+      - "5044:5044"
+    networks:
+      - elk
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    restart: unless-stopped
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.11.0
+    container_name: filebeat
+    user: root
+    volumes:
+      - ./logging/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml
+      - ./logs:/var/log/app:ro
+      - ./logs:/app/logs:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - elk
+    depends_on:
+      - logstash
+    restart: unless-stopped
+    command: filebeat -e -strict.perms=false
+
+  # Application Services
   nginx-lb:
     build:
       context: ./nginx
@@ -18,6 +101,7 @@ services:
     restart: unless-stopped
     networks:
       - default
+      - elk
     deploy:
       resources:
         limits:
@@ -35,7 +119,7 @@ services:
       - PYTHONPATH=/app
       - PYTHONUNBUFFERED=1
       - PYTHONDONTWRITEBYTECODE=1
-      - MODEL_NAME=resnet18
+      - MODEL_NAME=resnet50
       - DEVICE=cpu
       - API_HOST=0.0.0.0
       - API_PORT=8000
@@ -44,6 +128,7 @@ services:
       - ./logs:/app/logs
     networks:
       - default
+      - elk
     healthcheck:
       test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/api/v1/health')"]
       interval: 30s
@@ -51,6 +136,7 @@ services:
       retries: 3
       start_period: 40s
     restart: unless-stopped
+    user: "1000:1000"  # Ensure proper permissions for log writing
     deploy:
       replicas: 3
       resources:
@@ -61,6 +147,11 @@ services:
           memory: 512M
           cpus: '0.25'
 
+volumes:
+  elasticsearch-data:
+
 networks:
   default:
+    driver: bridge
+  elk:
     driver: bridge

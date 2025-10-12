@@ -56,9 +56,21 @@ app.include_router(router, prefix="/api/v1")
 # Re-apply logging configuration after Uvicorn starts
 @app.on_event("startup")
 async def startup_event():
-    """Re-apply logging configuration after startup"""
+    """Re-apply logging configuration after startup and pre-load model"""
     setup_logging(log_level=log_level, log_format=log_format)
     logger.info("Logging configuration re-applied after startup")
+    
+    # Pre-load the model at startup
+    try:
+        from app.models.manager import preload_model
+        logger.info("Pre-loading model at startup...")
+        success = preload_model()
+        if success:
+            logger.info("✅ Model pre-loaded successfully at startup")
+        else:
+            logger.warning("⚠️ Model pre-loading failed, will load on first request")
+    except Exception as e:
+        logger.error(f"❌ Failed to pre-load model at startup: {e}")
 
 
 # Add root endpoint

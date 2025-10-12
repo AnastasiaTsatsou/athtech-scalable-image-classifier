@@ -29,28 +29,14 @@ logger = logging.getLogger(__name__)
 # Initialize router
 router = APIRouter()
 
-# Global classifier instances
-classifier = None
 
 
 def get_classifier() -> ImageClassifier:
     """Get or initialize the PyTorch classifier instance"""
-    global classifier
-    if classifier is None:
-        model_name = os.getenv("MODEL_NAME", "resnet50")
-        logger.info(f"Loading {model_name} model...")
-        classifier = ImageClassifier(model_name=model_name)
-        logger.info(f"✅ {model_name} loaded successfully")
-    return classifier
+    from app.models.manager import get_classifier as manager_get_classifier
+    return manager_get_classifier()
 
 
-# Pre-load the model at startup
-logger.info("Pre-loading ResNet50 model...")
-try:
-    get_classifier()
-    logger.info("✅ Model pre-loaded successfully")
-except Exception as e:
-    logger.error(f"❌ Failed to pre-load model: {e}")
 
 
 @router.get("/health", response_model=HealthResponse)

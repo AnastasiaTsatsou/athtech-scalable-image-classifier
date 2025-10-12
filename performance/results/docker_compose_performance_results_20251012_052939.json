@@ -1,0 +1,37 @@
+{
+  "environment": "docker_compose",
+  "timestamp": "2025-10-12T05:29:37.331921",
+  "base_url": "http://localhost/api/v1",
+  "tests": {
+    "health_check": {
+      "response_time_ms": 10.204553604125977,
+      "status": "healthy",
+      "model_loaded": true,
+      "model_info": {
+        "model_name": "resnet50",
+        "device": "cpu",
+        "num_classes": "1000",
+        "framework": "PyTorch"
+      }
+    },
+    "single_request": {
+      "response_time_ms": 544.6827411651611,
+      "processing_time_ms": 537.6081466674805,
+      "status_code": 200
+    },
+    "multiple_requests": {
+      "avg_response_time_ms": 17.319941520690918,
+      "p95_response_time_ms": 29.718875885009766,
+      "avg_processing_time_ms": 0.0,
+      "p95_processing_time_ms": 0.0,
+      "num_requests": 10
+    },
+    "batch_request": {
+      "response_time_ms": 428.79414558410645,
+      "processing_time_ms": 421.6618537902832,
+      "total_files": 2,
+      "successful_files": 1,
+      "batch_size": 2
+    }
+  }
+}

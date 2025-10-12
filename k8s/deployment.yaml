@@ -69,6 +69,9 @@ spec:
           value: "4"
         - name: TORCH_NUM_THREADS
           value: "4"
+        volumeMounts:
+        - name: logs-volume
+          mountPath: /app/logs
         resources:
           requests:
             memory: "512Mi"  # Reduced with quantization
@@ -100,3 +103,6 @@ spec:
           capabilities:
             drop:
             - ALL
+      volumes:
+      - name: logs-volume
+        emptyDir: {}

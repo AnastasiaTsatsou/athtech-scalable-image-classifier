@@ -121,7 +121,7 @@ services:
       - PYTHONPATH=/app
       - PYTHONUNBUFFERED=1
       - PYTHONDONTWRITEBYTECODE=1
-      - MODEL_NAME=resnet50
+      - MODEL_NAME=mobilenet_v3_large
       - DEVICE=cpu
       - API_HOST=0.0.0.0
       - API_PORT=8000

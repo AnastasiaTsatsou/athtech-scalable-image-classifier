@@ -8,6 +8,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import uvicorn
 
+# PyTorch CPU threading optimization
+import torch
+torch.set_num_threads(4)
+torch.set_flush_denormal(True)
+
 from app.api.endpoints import router
 from app.monitoring.middleware import MetricsMiddleware
 from app.monitoring.metrics import metrics_collector

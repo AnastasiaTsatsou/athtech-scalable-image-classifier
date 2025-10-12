@@ -4,6 +4,10 @@ Uses pretrained ResNet model for image classification
 """
 
 import torch
+# CPU threading optimization (must be before any model operations)
+torch.set_num_threads(4)
+torch.set_flush_denormal(True)
+
 import torch.nn.functional as F
 from torchvision import models, transforms
 from PIL import Image
@@ -35,9 +39,14 @@ class ImageClassifier:
         self.model = None
         self.transform = None
         self.class_names = None
+        
+        # Track optimization status
+        self.is_quantized = False
+        self.is_torchscript = False
+        self.model_parameters = 0
+        self.model_size_mb = 0.0
 
         # Set inference mode optimizations
-        torch.set_num_threads(4)  # Optimize for container CPU limits
         torch.set_grad_enabled(False)
 
         start_time = time.time()
@@ -113,13 +122,23 @@ class ImageClassifier:
                     {torch.nn.Linear, torch.nn.Conv2d},  # Quantize these layers
                     dtype=torch.qint8
                 )
+                self.is_quantized = True
                 logger.info(f"Applied dynamic quantization to {self.model_name}")
             except Exception as e:
                 logger.warning(f"Quantization failed, using regular model: {e}")
             
+            # Calculate model parameters and size BEFORE TorchScript
+            self.model_parameters = sum(p.numel() for p in self.model.parameters())
+            
+            # Estimate model size in MB (rough approximation)
+            param_size = sum(p.numel() * p.element_size() for p in self.model.parameters())
+            buffer_size = sum(b.numel() * b.element_size() for b in self.model.buffers())
+            self.model_size_mb = (param_size + buffer_size) / (1024 * 1024)
+            
             # Apply TorchScript optimization for faster inference
             try:
                 self.model = torch.jit.freeze(torch.jit.script(self.model))
+                self.is_torchscript = True
                 logger.info(f"Applied TorchScript optimization to {self.model_name}")
             except Exception as e:
                 logger.warning(f"TorchScript optimization failed, using regular model: {e}")
@@ -321,4 +340,8 @@ class ImageClassifier:
                 else 1000
             ),
             "framework": "PyTorch",
+            "quantized": str(self.is_quantized),
+            "torchscript": str(self.is_torchscript),
+            "parameters": str(self.model_parameters),
+            "model_size_mb": f"{self.model_size_mb:.1f}",
         }

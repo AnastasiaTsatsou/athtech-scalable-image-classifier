@@ -81,17 +81,42 @@ class PerformanceTester:
     
     def test_cache_performance(self, num_requests: int = 10) -> Dict[str, float]:
         """Test cache performance with repeated identical requests."""
-        results = self.test_multiple_requests(num_requests)
+        # Use identical image for all requests to ensure cache hits
+        img_bytes = self._get_image_bytes()
         
-        # First request should be cache miss, rest should be cache hits
-        cache_miss_time = results['processing_times'][0]
-        cache_hit_times = results['processing_times'][1:]
+        # First request (cache miss)
+        start_time = time.time()
+        response = requests.post(
+            f'{self.base_url}/api/v1/classify',
+            files={'file': ('test.jpg', img_bytes, 'image/jpeg')},
+            data={'top_k': 5},
+            timeout=30
+        )
+        cache_miss_time = (time.time() - start_time) * 1000
+        
+        # Subsequent requests (cache hits)
+        cache_hit_times = []
+        for i in range(num_requests - 1):
+            img_bytes.seek(0)  # Reset file pointer
+            start_time = time.time()
+            response = requests.post(
+                f'{self.base_url}/api/v1/classify',
+                files={'file': ('test.jpg', img_bytes, 'image/jpeg')},
+                data={'top_k': 5},
+                timeout=30
+            )
+            cache_hit_time = (time.time() - start_time) * 1000
+            cache_hit_times.append(cache_hit_time)
+            
+            # Small delay between requests
+            time.sleep(0.1)
         
         return {
             'cache_miss_time_ms': cache_miss_time,
             'avg_cache_hit_time_ms': statistics.mean(cache_hit_times) if cache_hit_times else 0,
             'cache_hit_count': len(cache_hit_times),
-            'cache_miss_count': 1
+            'cache_miss_count': 1,
+            'cache_hit_times': cache_hit_times  # Include individual times for debugging
         }
     
     def test_batch_requests(self, batch_size: int = 2) -> Dict[str, float]:
@@ -134,6 +159,20 @@ def test_performance_targets():
     """Test that performance meets the <200ms P95 target."""
     tester = PerformanceTester()
     
+    # Get model info for verification
+    try:
+        response = requests.get(f'{tester.base_url}/api/v1/model/info', timeout=10)
+        model_info = response.json() if response.status_code == 200 else {}
+        print(f"\nModel Info:")
+        print(f"Model: {model_info.get('model_name', 'Unknown')}")
+        print(f"Quantized: {model_info.get('quantized', 'Unknown')}")
+        print(f"TorchScript: {model_info.get('torchscript', 'Unknown')}")
+        print(f"Parameters: {model_info.get('parameters', 'Unknown')}")
+        print(f"Size: {model_info.get('model_size_mb', 'Unknown')} MB")
+    except Exception as e:
+        print(f"Failed to get model info: {e}")
+        model_info = {}
+    
     # Test multiple requests to get P95
     results = tester.test_multiple_requests(10)
     
@@ -141,7 +180,7 @@ def test_performance_targets():
     p95_processing = sorted(results['processing_times'])[int(0.95 * len(results['processing_times']))]
     p95_response = sorted(results['response_times'])[int(0.95 * len(results['response_times']))]
     
-    print(f"Performance Test Results:")
+    print(f"\nPerformance Test Results:")
     print(f"P95 Processing Time: {p95_processing:.1f}ms")
     print(f"P95 Response Time: {p95_response:.1f}ms")
     print(f"Average Processing Time: {statistics.mean(results['processing_times']):.1f}ms")

@@ -10,7 +10,7 @@ data:
   PYTHONDONTWRITEBYTECODE: "1"
   
   # Model configuration
-  MODEL_NAME: "resnet50"
+  MODEL_NAME: "mobilenet_v3_large"
   DEVICE: "cpu"
   
   # API configuration

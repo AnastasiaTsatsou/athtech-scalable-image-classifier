@@ -203,6 +203,16 @@ class PerformanceBenchmark:
         """Save benchmark results to file"""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         
+        # Get model info for inclusion in results
+        model_info = {}
+        try:
+            import requests
+            response = requests.get(f'{self.tester.base_url}/api/v1/model/info', timeout=10)
+            if response.status_code == 200:
+                model_info = response.json()
+        except Exception as e:
+            logger.warning(f"Failed to get model info: {e}")
+        
         # Save raw results
         results_file = os.path.join(
             self.results_dir, 
@@ -221,17 +231,30 @@ class PerformanceBenchmark:
                 'timestamp': result.timestamp.isoformat()
             })
         
-        with open(results_file, 'w') as f:
-            json.dump(serializable_results, f, indent=2)
+        # Include model info in results
+        results_with_model_info = {
+            'model_info': model_info,
+            'results': serializable_results,
+            'timestamp': timestamp
+        }
         
-        # Save analysis
+        with open(results_file, 'w') as f:
+            json.dump(results_with_model_info, f, indent=2)
+        
+        # Save analysis with model info
         analysis_file = os.path.join(
             self.results_dir, 
             f"{test_name}_analysis_{timestamp}.json"
         )
         
+        analysis_with_model_info = {
+            'model_info': model_info,
+            'analysis': analysis,
+            'timestamp': timestamp
+        }
+        
         with open(analysis_file, 'w') as f:
-            json.dump(analysis, f, indent=2)
+            json.dump(analysis_with_model_info, f, indent=2)
         
         logger.info(f"Results saved: {results_file}, {analysis_file}")
     

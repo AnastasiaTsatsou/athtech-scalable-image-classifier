@@ -1,0 +1,33 @@
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: mobilenet-v3-large
+  namespace: kserve-comparison
+  labels:
+    app: mobilenet-v3-large
+    version: v1
+  annotations:
+    serving.kserve.io/deploymentMode: RawDeployment
+spec:
+  predictor:
+    pytorch:
+      storageUri: "pvc://mobilenet-model-pvc"
+      modelClassName: "ImageClassifierHandler"
+      resources:
+        requests:
+          memory: "512Mi"
+          cpu: "500m"
+        limits:
+          memory: "2Gi"
+          cpu: "2000m"
+      env:
+        - name: OMP_NUM_THREADS
+          value: "4"
+        - name: MKL_NUM_THREADS
+          value: "4"
+        - name: TORCH_NUM_THREADS
+          value: "4"
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        - name: PYTHONDONTWRITEBYTECODE
+          value: "1"

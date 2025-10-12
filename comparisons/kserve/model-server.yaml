@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-server
+  namespace: kserve-comparison
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: model-server
+  template:
+    metadata:
+      labels:
+        app: model-server
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: model-files
+          mountPath: /usr/share/nginx/html
+      volumes:
+      - name: model-files
+        hostPath:
+          path: /c/Users/anast/Documents/Repos/athtech-scalable-image-classifier/comparisons/kserve/model-store
+          type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: model-server-service
+  namespace: kserve-comparison
+spec:
+  selector:
+    app: model-server
+  ports:
+  - port: 80
+    targetPort: 80
+  type: ClusterIP

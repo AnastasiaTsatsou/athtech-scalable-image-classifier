@@ -1,0 +1,148 @@
+{
+  "synthetic_images": [
+    {
+      "filename": "gradient_blue.jpg",
+      "size": 1929,
+      "type": "gradient",
+      "color": "blue"
+    },
+    {
+      "filename": "gradient_cyan.jpg",
+      "size": 2625,
+      "type": "gradient",
+      "color": "cyan"
+    },
+    {
+      "filename": "gradient_green.jpg",
+      "size": 2689,
+      "type": "gradient",
+      "color": "green"
+    },
+    {
+      "filename": "gradient_orange.jpg",
+      "size": 2624,
+      "type": "gradient",
+      "color": "orange"
+    },
+    {
+      "filename": "gradient_pink.jpg",
+      "size": 2445,
+      "type": "gradient",
+      "color": "pink"
+    },
+    {
+      "filename": "gradient_purple.jpg",
+      "size": 2243,
+      "type": "gradient",
+      "color": "purple"
+    },
+    {
+      "filename": "gradient_red.jpg",
+      "size": 2380,
+      "type": "gradient",
+      "color": "red"
+    },
+    {
+      "filename": "gradient_yellow.jpg",
+      "size": 2655,
+      "type": "gradient",
+      "color": "yellow"
+    },
+    {
+      "filename": "synthetic_blue.jpg",
+      "size": 1413,
+      "type": "synthetic",
+      "color": "blue"
+    },
+    {
+      "filename": "synthetic_cyan.jpg",
+      "size": 1413,
+      "type": "synthetic",
+      "color": "cyan"
+    },
+    {
+      "filename": "synthetic_green.jpg",
+      "size": 1413,
+      "type": "synthetic",
+      "color": "green"
+    },
+    {
+      "filename": "synthetic_orange.jpg",
+      "size": 1413,
+      "type": "synthetic",
+      "color": "orange"
+    },
+    {
+      "filename": "synthetic_pink.jpg",
+      "size": 1412,
+      "type": "synthetic",
+      "color": "pink"
+    },
+    {
+      "filename": "synthetic_purple.jpg",
+      "size": 1413,
+      "type": "synthetic",
+      "color": "purple"
+    },
+    {
+      "filename": "synthetic_red.jpg",
+      "size": 1413,
+      "type": "synthetic",
+      "color": "red"
+    },
+    {
+      "filename": "synthetic_yellow.jpg",
+      "size": 1413,
+      "type": "synthetic",
+      "color": "yellow"
+    }
+  ],
+  "pattern_images": [
+    {
+      "filename": "checkerboard.jpg",
+      "size": 4697,
+      "type": "pattern",
+      "pattern": "checkerboard"
+    },
+    {
+      "filename": "concentric_circles.jpg",
+      "size": 11624,
+      "type": "pattern",
+      "pattern": "concentric_circles"
+    },
+    {
+      "filename": "diagonal_stripes.jpg",
+      "size": 17677,
+      "type": "pattern",
+      "pattern": "diagonal_stripes"
+    }
+  ],
+  "real_images": [
+    {
+      "filename": "airplane.jpg",
+      "size": 12099,
+      "type": "real"
+    },
+    {
+      "filename": "bird.jpg",
+      "size": 11495,
+      "type": "real"
+    },
+    {
+      "filename": "car.jpg",
+      "size": 30764,
+      "type": "real"
+    },
+    {
+      "filename": "cat.jpg",
+      "size": 11767,
+      "type": "real"
+    },
+    {
+      "filename": "dog.jpg",
+      "size": 17420,
+      "type": "real"
+    }
+  ],
+  "total_count": 24
+}

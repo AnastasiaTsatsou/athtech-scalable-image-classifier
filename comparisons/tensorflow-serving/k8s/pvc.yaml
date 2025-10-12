@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mobilenet-model-pvc
+  namespace: tfserving-simple
+  labels:
+    app: mobilenet-model-storage
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: hostpath  # Using hostpath storage class

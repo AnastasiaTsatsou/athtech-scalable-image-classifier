@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tensorflow-serving-proxy
+  namespace: tfserving-simple
+  labels:
+    app: tensorflow-serving-proxy
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tensorflow-serving-proxy
+  template:
+    metadata:
+      labels:
+        app: tensorflow-serving-proxy
+        version: v1
+    spec:
+      initContainers:
+      - name: model-setup
+        image: tensorflow/tensorflow:latest
+        command: ['python', '-c']
+        args:
+          - |
+            import tensorflow as tf
+            import os
+            
+            # Create a simple model for testing
+            class HalfPlusTwo(tf.Module):
+                @tf.function(input_signature=[tf.TensorSpec(shape=[None], dtype=tf.float32)])
+                def __call__(self, x):
+                    return tf.add(tf.multiply(x, 0.5), 2.0)
+            
+            model = HalfPlusTwo()
+            export_path = '/models/half_plus_two/1'
+            os.makedirs(export_path, exist_ok=True)
+            tf.saved_model.save(model, export_path)
+            print('Simple model saved successfully')
+        volumeMounts:
+        - name: model-storage
+          mountPath: /models
+      containers:
+      - name: tensorflow-serving
+        image: tensorflow/serving:latest
+        ports:
+        - containerPort: 8500
+          name: grpc
+        - containerPort: 8501
+          name: http
+        command: ["/usr/bin/tensorflow_model_server"]
+        args:
+          - "--port=8500"
+          - "--rest_api_port=8501"
+          - "--model_name=half_plus_two"
+          - "--model_base_path=/models/half_plus_two"
+          - "--enable_model_warmup=true"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "2000m"
+        volumeMounts:
+        - name: model-storage
+          mountPath: /models
+      - name: http-proxy
+        image: nginx:alpine
+        ports:
+        - containerPort: 8080
+          name: proxy
+        command: ["/bin/sh"]
+        args:
+          - -c
+          - |
+            echo 'server {
+                listen 8080;
+                location / {
+                    proxy_pass http://localhost:8501;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                }
+            }' > /etc/nginx/conf.d/default.conf
+            nginx -g "daemon off;"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+      volumes:
+      - name: model-storage
+        emptyDir: {}
+

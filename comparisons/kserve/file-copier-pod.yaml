@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: file-copier
+  namespace: kserve-comparison
+spec:
+  containers:
+  - name: file-copier
+    image: busybox
+    command: ["sleep", "3600"]
+    volumeMounts:
+    - name: model-volume
+      mountPath: /mnt/models
+  volumes:
+  - name: model-volume
+    persistentVolumeClaim:
+      claimName: mobilenet-model-pvc

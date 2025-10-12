@@ -1,0 +1,171 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tensorflow-serving-mobilenet
+  namespace: tfserving-simple
+  labels:
+    app: tensorflow-serving-mobilenet
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tensorflow-serving-mobilenet
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: tensorflow-serving-mobilenet
+        version: v1
+    spec:
+      initContainers:
+      - name: model-setup
+        image: tensorflow/tensorflow:latest
+        command: ['python', '-c']
+        args:
+        - |
+          import tensorflow as tf
+          import os
+          import numpy as np
+          from pathlib import Path
+          
+          print("🚀 Setting up MobileNetV3-Large model...")
+          
+          # Create model directory structure
+          model_base_path = '/models/mobilenet_v3_large/1'
+          os.makedirs(model_base_path, exist_ok=True)
+          
+          # Create MobileNetV3-Large model
+          print("Creating MobileNetV3-Large model...")
+          base_model = tf.keras.applications.MobileNetV3Large(
+              input_shape=(224, 224, 3),
+              include_top=True,
+              weights='imagenet',
+              classes=1000,
+              classifier_activation=None
+          )
+          
+          # Create serving model with preprocessing
+          inputs = tf.keras.Input(shape=(224, 224, 3), dtype=tf.float32, name='input_image')
+          
+          # ImageNet normalization constants
+          # MobileNetV3Large expects inputs in the range [-1, 1]
+          # So, we first scale [0, 1] to [-1, 1]
+          normalized = (inputs * 2.0) - 1.0
+          
+          # Get predictions from base model
+          predictions = base_model(normalized)
+          
+          # Create serving model
+          serving_model = tf.keras.Model(inputs=inputs, outputs=predictions, name='mobilenet_v3_large_serving')
+          
+          # Export to SavedModel
+          print("Exporting model to SavedModel format...")
+          serving_model.export(model_base_path)
+          
+          # Validate export
+          print("Validating exported model...")
+          loaded_model = tf.saved_model.load(model_base_path)
+          test_image = np.ones((1, 224, 224, 3), dtype=np.float32) * [1.0, 0.0, 0.0]
+          prediction_fn = loaded_model.signatures['serving_default']
+          
+          # Ensure input is float32
+          test_tensor = tf.constant(test_image, dtype=tf.float32)
+          predictions = prediction_fn(test_tensor)
+          
+          if isinstance(predictions, dict):
+              logits = predictions['output_0'].numpy()
+          else:
+              logits = predictions.numpy()
+          
+          print(f"✓ Model exported successfully: {logits.shape}")
+          print(f"✓ Top prediction: {np.max(logits):.4f}")
+          
+          # Create ImageNet classes file
+          classes_file = '/models/imagenet_classes.txt'
+          with open(classes_file, 'w') as f:
+              for i in range(1000):
+                  f.write(f"class_{i}\n")
+          
+          print("✅ MobileNetV3-Large model setup completed!")
+        volumeMounts:
+        - name: model-storage
+          mountPath: /models
+        resources:
+          requests:
+            cpu: 1
+            memory: 1Gi
+          limits:
+            cpu: 2
+            memory: 2Gi
+      containers:
+      - name: tensorflow-serving
+        image: tensorflow/serving:latest
+        ports:
+        - containerPort: 8500
+          name: grpc
+        - containerPort: 8501
+          name: http
+        args:
+        - --port=8500
+        - --rest_api_port=8501
+        - --model_name=mobilenet_v3_large
+        - --model_base_path=/models/mobilenet_v3_large
+        - --enable_model_warmup=true
+        livenessProbe:
+          httpGet:
+            path: /v1/models/mobilenet_v3_large
+            port: 8501
+          initialDelaySeconds: 60
+          timeoutSeconds: 5
+          periodSeconds: 30
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /v1/models/mobilenet_v3_large
+            port: 8501
+          initialDelaySeconds: 30
+          timeoutSeconds: 5
+          periodSeconds: 10
+          failureThreshold: 3
+        resources:
+          requests:
+            cpu: 500m
+            memory: 512Mi
+          limits:
+            cpu: 2
+            memory: 2Gi
+        volumeMounts:
+        - name: model-storage
+          mountPath: /models
+      - name: http-proxy
+        image: nginx:alpine
+        ports:
+        - containerPort: 8080
+          name: proxy
+        command: ['/bin/sh']
+        args:
+        - -c
+        - |
+          echo 'server {
+              listen 8080;
+              location / {
+                  proxy_pass http://localhost:8501;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+              }
+          }' > /etc/nginx/conf.d/default.conf
+          nginx -g "daemon off;"
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+      volumes:
+      - name: model-storage
+        persistentVolumeClaim:
+          claimName: mobilenet-model-pvc

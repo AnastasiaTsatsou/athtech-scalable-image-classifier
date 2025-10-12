@@ -4,18 +4,22 @@ FastAPI endpoints for image classification service
 
 import time
 import logging
-import os
+import io
 from typing import List
+
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from PIL import Image
-import io
 
 from app.api.schemas import (
     ClassificationResponse,
     HealthResponse,
     PredictionResponse,
 )
-from app.middleware.cache import image_cache_key, get_cached_result, set_cached_result
+from app.middleware.cache import (
+    image_cache_key,
+    get_cached_result,
+    set_cached_result,
+)
 
 try:
     from app.models.image_classifier import ImageClassifier
@@ -30,13 +34,11 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-
 def get_classifier() -> ImageClassifier:
     """Get or initialize the PyTorch classifier instance"""
     from app.models.manager import get_classifier as manager_get_classifier
+
     return manager_get_classifier()
-
-
 
 
 @router.get("/health", response_model=HealthResponse)
@@ -89,20 +91,22 @@ async def classify_image(
 
         # Read and process image
         image_data = await file.read()
-        
+
         # Add size validation early (10MB limit)
         if len(image_data) > 10_000_000:
-            raise HTTPException(status_code=400, detail="Image too large (max 10MB)")
-        
+            raise HTTPException(
+                status_code=400, detail="Image too large (max 10MB)"
+            )
+
         # Check cache first
         cache_key = image_cache_key(image_data, top_k)
         cached_result = get_cached_result(cache_key)
         if cached_result:
-            logger.info(f"Cache hit for image classification")
+            logger.info("Cache hit for image classification")
             # For cache hits, set processing time to 0
-            cached_result['processing_time_ms'] = 0.0
+            cached_result["processing_time_ms"] = 0.0
             return ClassificationResponse(**cached_result)
-        
+
         image = Image.open(io.BytesIO(image_data))
 
         # Validate image
@@ -110,7 +114,7 @@ async def classify_image(
             raise HTTPException(
                 status_code=400, detail="Invalid image dimensions"
             )
-        
+
         # Resize large images before processing (optimize for speed)
         if image.size[0] > 1024 or image.size[1] > 1024:
             image.thumbnail((1024, 1024), Image.Resampling.BILINEAR)
@@ -138,10 +142,10 @@ async def classify_image(
             model_info=clf.get_model_info(),
             processing_time_ms=processing_time,
         )
-        
+
         # Cache the result
         set_cached_result(cache_key, response.dict())
-        
+
         return response
 
     except HTTPException:
@@ -155,72 +159,86 @@ async def classify_image(
 
 @router.post("/classify-batch")
 async def classify_batch(
-    files: List[UploadFile] = File(..., description="Multiple image files to classify"),
-    top_k: int = Form(5, description="Number of top predictions to return", ge=1, le=10),
+    files: List[UploadFile] = File(
+        ..., description="Multiple image files to classify"
+    ),
+    top_k: int = Form(
+        5, description="Number of top predictions to return", ge=1, le=10
+    ),
 ):
     """
     Classify multiple images in batch (more efficient for multiple images)
-    
+
     Args:
         files: List of image files
         top_k: Number of top predictions to return
-        
+
     Returns:
         List of classification results
     """
     start_time = time.time()
-    
+
     try:
         if len(files) > 10:  # Limit batch size
-            raise HTTPException(status_code=400, detail="Maximum 10 images per batch")
-        
+            raise HTTPException(
+                status_code=400, detail="Maximum 10 images per batch"
+            )
+
         # Get classifier
         clf = get_classifier()
-        
+
         results = []
-        
+
         # Process images in batch
         for i, file in enumerate(files):
             try:
                 # Validate file type
-                if not file.content_type or not file.content_type.startswith("image/"):
-                    results.append({
-                        "file_index": i,
-                        "filename": file.filename,
-                        "error": "File must be an image"
-                    })
+                if not file.content_type or not file.content_type.startswith(
+                    "image/"
+                ):
+                    results.append(
+                        {
+                            "file_index": i,
+                            "filename": file.filename,
+                            "error": "File must be an image",
+                        }
+                    )
                     continue
-                
+
                 # Read and process image
                 image_data = await file.read()
-                
+
                 # Size validation
                 if len(image_data) > 10_000_000:
-                    results.append({
-                        "file_index": i,
-                        "filename": file.filename,
-                        "error": "Image too large (max 10MB)"
-                    })
+                    results.append(
+                        {
+                            "file_index": i,
+                            "filename": file.filename,
+                            "error": "Image too large (max 10MB)",
+                        }
+                    )
                     continue
-                
+
                 image = Image.open(io.BytesIO(image_data))
-                
+
                 # Validate image
                 if image.size[0] == 0 or image.size[1] == 0:
-                    results.append({
-                        "file_index": i,
-                        "filename": file.filename,
-                        "error": "Invalid image dimensions"
-                    })
+                    results.append(
+                        {
+                            "file_index": i,
+                            "filename": file.filename,
+                            "error": "Invalid image dimensions",
+                        }
+                    )
                     continue
-                
+
                 # Resize large images
                 if image.size[0] > 1024 or image.size[1] > 1024:
                     image.thumbnail((1024, 1024), Image.Resampling.BILINEAR)
-                
+
                 # Make prediction
                 predictions = clf.predict(image, top_k=top_k)
-                
+
                 # Format response
                 prediction_responses = [
                     PredictionResponse(
@@ -230,31 +248,35 @@ async def classify_batch(
                     )
                     for pred in predictions
                 ]
-                
-                results.append({
-                    "file_index": i,
-                    "filename": file.filename,
-                    "predictions": prediction_responses,
-                    "model_info": clf.get_model_info(),
-                })
-                
+
+                results.append(
+                    {
+                        "file_index": i,
+                        "filename": file.filename,
+                        "predictions": prediction_responses,
+                        "model_info": clf.get_model_info(),
+                    }
+                )
+
             except Exception as e:
-                results.append({
-                    "file_index": i,
-                    "filename": file.filename,
-                    "error": str(e)
-                })
-        
+                results.append(
+                    {
+                        "file_index": i,
+                        "filename": file.filename,
+                        "error": str(e),
+                    }
+                )
+
         # Calculate processing time
         processing_time = (time.time() - start_time) * 1000
-        
+
         return {
             "results": results,
             "total_files": len(files),
             "successful_files": len([r for r in results if "error" not in r]),
             "processing_time_ms": processing_time,
         }
-        
+
     except HTTPException:
         raise
     except Exception as e:

@@ -3,18 +3,19 @@ Image Classification Model Implementation
 Uses pretrained ResNet model for image classification
 """
 
+import time
+from typing import List, Dict
+
 import torch
+import torch.nn.functional as F
+from PIL import Image
+from torchvision import models, transforms
+
+from app.logging.config import get_logger, log_classification, log_error
+
 # CPU threading optimization (must be before any model operations)
 torch.set_num_threads(4)
 torch.set_flush_denormal(True)
-
-import torch.nn.functional as F
-from torchvision import models, transforms
-from PIL import Image
-from typing import List, Dict
-import time
-
-from app.logging.config import get_logger, log_classification, log_error
 
 logger = get_logger(__name__)
 

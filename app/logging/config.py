@@ -120,8 +120,11 @@ def setup_logging(log_level: str = "INFO", log_format: str = "json") -> None:
         log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
         log_format: Log format (json, text)
     """
-    # Check if running in container (but still enable file logging for ELK stack)
-    is_container = os.path.exists("/.dockerenv") or os.environ.get("CONTAINER") == "true"
+    # Check if running in container (but still enable file logging for ELK)
+    # is_container = (
+    #     os.path.exists("/.dockerenv") or
+    #     os.environ.get("CONTAINER") == "true"
+    # )
 
     # Configure structlog
     structlog.configure(
@@ -154,11 +157,11 @@ def setup_logging(log_level: str = "INFO", log_format: str = "json") -> None:
             "stream": sys.stdout,
         },
     }
-    
+
     # Add file handler for ELK stack
     # Ensure logs directory exists
     os.makedirs("logs", exist_ok=True)
-    
+
     handlers["file"] = {
         "class": "logging.FileHandler",
         "level": log_level,
@@ -166,11 +169,11 @@ def setup_logging(log_level: str = "INFO", log_format: str = "json") -> None:
         "filters": ["context"],
         "filename": "logs/app.log",
     }
-    
+
     # Determine which handlers to use
     handler_list = ["console"]
     handler_list.append("file")  # Always use file handler for ELK stack
-    
+
     logging_config = {
         "version": 1,
         "disable_existing_loggers": False,

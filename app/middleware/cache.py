@@ -3,11 +3,10 @@ Response caching middleware for image classification
 """
 
 import hashlib
-import json
 from typing import Dict, Any, Optional
-from functools import lru_cache
-from cachetools import TTLCache
+
 import logging
+from cachetools import TTLCache
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +40,10 @@ def set_cached_result(cache_key: str, result: Dict[str, Any]) -> None:
     """Cache classification result"""
     try:
         cache[cache_key] = result
-        logger.info(f"Cached result for key: {cache_key[:8]}... (cache size: {len(cache)})")
+        logger.info(
+            f"Cached result for key: {cache_key[:8]}... "
+            f"(cache size: {len(cache)})"
+        )
     except Exception as e:
         logger.warning(f"Cache set failed: {e}")
 

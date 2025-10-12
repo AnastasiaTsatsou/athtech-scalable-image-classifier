@@ -3,21 +3,22 @@ Main FastAPI application for Scalable Image Classifier
 """
 
 import os
+import uvicorn
+
+import torch
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-import uvicorn
-
-# PyTorch CPU threading optimization
-import torch
-torch.set_num_threads(4)
-torch.set_flush_denormal(True)
 
 from app.api.endpoints import router
-from app.monitoring.middleware import MetricsMiddleware
-from app.monitoring.metrics import metrics_collector
 from app.logging.config import setup_logging, get_logger
 from app.logging.middleware import LoggingMiddleware
+from app.monitoring.middleware import MetricsMiddleware
+from app.monitoring.metrics import metrics_collector
+
+# PyTorch CPU threading optimization
+torch.set_num_threads(4)
+torch.set_flush_denormal(True)
 
 # Create logs directory
 os.makedirs("logs", exist_ok=True)
@@ -58,22 +59,26 @@ app.add_middleware(MetricsMiddleware)
 # Include API routes
 app.include_router(router, prefix="/api/v1")
 
+
 # Re-apply logging configuration after Uvicorn starts
 @app.on_event("startup")
 async def startup_event():
     """Re-apply logging configuration after startup and pre-load model"""
     setup_logging(log_level=log_level, log_format=log_format)
     logger.info("Logging configuration re-applied after startup")
-    
+
     # Pre-load the model at startup
     try:
         from app.models.manager import preload_model
+
         logger.info("Pre-loading model at startup...")
         success = preload_model()
         if success:
             logger.info("✅ Model pre-loaded successfully at startup")
         else:
-            logger.warning("⚠️ Model pre-loading failed, will load on first request")
+            logger.warning(
+                "⚠️ Model pre-loading failed, will load on first request"
+            )
     except Exception as e:
         logger.error(f"❌ Failed to pre-load model at startup: {e}")
 

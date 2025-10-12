@@ -74,10 +74,12 @@ services:
       - ./logs:/app/logs:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
-    networks:
-      - elk
     depends_on:
+      - image-classifier
       - logstash
+    networks:
+      - default
+      - elk
     restart: unless-stopped
     command: filebeat -e -strict.perms=false
 
@@ -149,6 +151,7 @@ services:
 
 volumes:
   elasticsearch-data:
+  app-logs:
 
 networks:
   default:

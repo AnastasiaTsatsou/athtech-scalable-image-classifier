@@ -53,6 +53,13 @@ app.add_middleware(MetricsMiddleware)
 # Include API routes
 app.include_router(router, prefix="/api/v1")
 
+# Re-apply logging configuration after Uvicorn starts
+@app.on_event("startup")
+async def startup_event():
+    """Re-apply logging configuration after startup"""
+    setup_logging(log_level=log_level, log_format=log_format)
+    logger.info("Logging configuration re-applied after startup")
+
 
 # Add root endpoint
 @app.get("/")

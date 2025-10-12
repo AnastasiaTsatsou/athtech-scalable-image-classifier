@@ -11,11 +11,13 @@ tensorflow-cpu==2.16.1
 pillow==10.4.0
 numpy==1.26.4
 opencv-python-headless==4.10.0.84
+onnxruntime==1.16.3
 
 # Utilities
 pydantic==2.5.0
 python-dotenv==1.0.0
 requests==2.31.0
+cachetools==5.3.2
 
 # Testing
 pytest==7.4.3

@@ -36,6 +36,10 @@ class ImageClassifier:
         self.transform = None
         self.class_names = None
 
+        # Set inference mode optimizations
+        torch.set_num_threads(4)  # Optimize for container CPU limits
+        torch.set_grad_enabled(False)
+
         start_time = time.time()
         self._load_model()
         self._setup_transforms()
@@ -88,11 +92,38 @@ class ImageClassifier:
                 self.model = models.efficientnet_b2(
                     weights=models.EfficientNet_B2_Weights.IMAGENET1K_V1
                 )
+            elif self.model_name == "mobilenet_v3_small":
+                self.model = models.mobilenet_v3_small(
+                    weights=models.MobileNet_V3_Small_Weights.IMAGENET1K_V1
+                )
+            elif self.model_name == "mobilenet_v3_large":
+                self.model = models.mobilenet_v3_large(
+                    weights=models.MobileNet_V3_Large_Weights.IMAGENET1K_V1
+                )
             else:
                 raise ValueError(f"Unsupported model: {self.model_name}")
 
             self.model.eval()
             self.model.to(self.device)
+            
+            # Apply dynamic quantization for CPU optimization (INT8)
+            try:
+                self.model = torch.quantization.quantize_dynamic(
+                    self.model,
+                    {torch.nn.Linear, torch.nn.Conv2d},  # Quantize these layers
+                    dtype=torch.qint8
+                )
+                logger.info(f"Applied dynamic quantization to {self.model_name}")
+            except Exception as e:
+                logger.warning(f"Quantization failed, using regular model: {e}")
+            
+            # Apply TorchScript optimization for faster inference
+            try:
+                self.model = torch.jit.freeze(torch.jit.script(self.model))
+                logger.info(f"Applied TorchScript optimization to {self.model_name}")
+            except Exception as e:
+                logger.warning(f"TorchScript optimization failed, using regular model: {e}")
+            
             logger.info(f"Loaded {self.model_name} model on {self.device}")
 
         except Exception as e:
@@ -103,7 +134,7 @@ class ImageClassifier:
         """Setup image preprocessing transforms"""
         self.transform = transforms.Compose(
             [
-                transforms.Resize(256),
+                transforms.Resize(256, interpolation=transforms.InterpolationMode.BILINEAR),
                 transforms.CenterCrop(224),
                 transforms.ToTensor(),
                 transforms.Normalize(
@@ -113,21 +144,26 @@ class ImageClassifier:
         )
 
     def _load_class_names(self):
-        """Load ImageNet class names"""
+        """Load ImageNet class names from cached file"""
         try:
-            # Load ImageNet class names
-            import requests  # type: ignore
-
-            url = (
-                "https://raw.githubusercontent.com/pytorch/hub/master/"
-                "imagenet_classes.txt"
-            )
-            response = requests.get(url)
-            self.class_names = response.text.strip().split("\n")
-            logger.info(
-                f"Loaded {len(self.class_names) if self.class_names else 0} "
-                f"class names"
-            )
+            # Load from cached file instead of network request
+            import os
+            class_file = os.path.join(os.path.dirname(__file__), "imagenet_classes.txt")
+            
+            if os.path.exists(class_file):
+                with open(class_file, 'r', encoding='utf-8') as f:
+                    self.class_names = [line.strip() for line in f.readlines()]
+                logger.info(f"Loaded {len(self.class_names)} class names from cache")
+            else:
+                # Fallback to network request if cache doesn't exist
+                import requests
+                url = (
+                    "https://raw.githubusercontent.com/pytorch/hub/master/"
+                    "imagenet_classes.txt"
+                )
+                response = requests.get(url)
+                self.class_names = response.text.strip().split("\n")
+                logger.info(f"Loaded {len(self.class_names)} class names from network")
         except Exception as e:
             logger.warning(f"Failed to load class names: {e}")
             self.class_names = [f"class_{i}" for i in range(1000)]
@@ -143,7 +179,7 @@ class ImageClassifier:
             Preprocessed tensor
         """
         try:
-            # Convert to RGB if necessary
+            # Convert to RGB only if needed (skip check if already RGB)
             if image.mode != "RGB":
                 image = image.convert("RGB")
 
@@ -152,10 +188,10 @@ class ImageClassifier:
                 raise ValueError("Model transforms not initialized")
             tensor = self.transform(image)
 
-            # Add batch dimension
-            tensor = tensor.unsqueeze(0)
+            # Add batch dimension and move to device with non-blocking transfer
+            tensor = tensor.unsqueeze(0).to(self.device, non_blocking=True)
 
-            return tensor.to(self.device)
+            return tensor
 
         except Exception as e:
             logger.error(f"Image preprocessing failed: {e}")
@@ -186,27 +222,20 @@ class ImageClassifier:
                 outputs = self.model(input_tensor)
                 probabilities = F.softmax(outputs, dim=1)
 
-                # Get top-k predictions
-                top_probs, top_indices = torch.topk(probabilities, top_k)
+                # Get top-k predictions (optimize with batch CPU conversion)
+                top_probs, top_indices = torch.topk(probabilities[0], top_k)
+                top_probs_list = top_probs.cpu().tolist()  # Batch conversion
+                top_indices_list = top_indices.cpu().tolist()
 
                 # Convert to list of dictionaries
-                predictions = []
-                for i in range(top_k):
-                    class_idx = top_indices[0][i].item()
-                    prob = top_probs[0][i].item()
-                    class_name = (
-                        self.class_names[class_idx]
-                        if self.class_names is not None
-                        else f"Class_{class_idx}"
-                    )
-
-                    predictions.append(
-                        {
-                            "class_name": class_name,
-                            "probability": prob,
-                            "class_id": class_idx,
-                        }
-                    )
+                predictions = [
+                    {
+                        "class_name": self.class_names[idx] if self.class_names else f"Class_{idx}",
+                        "probability": prob,
+                        "class_id": idx,
+                    }
+                    for prob, idx in zip(top_probs_list, top_indices_list)
+                ]
 
                 # Record metrics and logs
                 duration = time.time() - start_time

@@ -42,10 +42,7 @@ spec:
               name: image-classifier-config
               key: PYTHONDONTWRITEBYTECODE
         - name: MODEL_NAME
-          valueFrom:
-            configMapKeyRef:
-              name: image-classifier-config
-              key: MODEL_NAME
+          value: "resnet50"
         - name: DEVICE
           valueFrom:
             configMapKeyRef:
@@ -66,13 +63,19 @@ spec:
             configMapKeyRef:
               name: image-classifier-config
               key: LOG_LEVEL
+        - name: OMP_NUM_THREADS
+          value: "4"
+        - name: MKL_NUM_THREADS
+          value: "4"
+        - name: TORCH_NUM_THREADS
+          value: "4"
         resources:
           requests:
-            memory: "1Gi"
-            cpu: "500m"
+            memory: "512Mi"  # Reduced with quantization
+            cpu: "1000m"     # Full core for inference
           limits:
-            memory: "2Gi"
-            cpu: "1000m"
+            memory: "1Gi"
+            cpu: "2000m"     # Allow bursting
         livenessProbe:
           httpGet:
             path: /api/v1/health

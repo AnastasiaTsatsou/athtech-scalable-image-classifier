@@ -8,9 +8,10 @@ filebeat.inputs:
     service: image-classifier
     environment: development
   fields_under_root: true
-  multiline.pattern: '^\d{4}-\d{2}-\d{2}'
-  multiline.negate: true
-  multiline.match: after
+  # Disable multiline processing to avoid bundling JSON logs together
+  # multiline.pattern: '^\d{4}-\d{2}-\d{2}'
+  # multiline.negate: true
+  # multiline.match: after
 
 # Docker container logs removed to reduce log volume
 # - type: container

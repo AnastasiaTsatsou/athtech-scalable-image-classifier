@@ -120,7 +120,7 @@ def setup_logging(log_level: str = "INFO", log_format: str = "json") -> None:
         log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
         log_format: Log format (json, text)
     """
-    # Check if running in container (disable file logging)
+    # Check if running in container (but still enable file logging for ELK stack)
     is_container = os.path.exists("/.dockerenv") or os.environ.get("CONTAINER") == "true"
 
     # Configure structlog
@@ -156,14 +156,15 @@ def setup_logging(log_level: str = "INFO", log_format: str = "json") -> None:
     }
     
     # Add file handler for ELK stack
+    # Ensure logs directory exists
+    os.makedirs("logs", exist_ok=True)
+    
     handlers["file"] = {
-        "class": "logging.handlers.RotatingFileHandler",
+        "class": "logging.FileHandler",
         "level": log_level,
         "formatter": log_format,
         "filters": ["context"],
         "filename": "logs/app.log",
-        "maxBytes": 10485760,  # 10MB
-        "backupCount": 5,
     }
     
     # Determine which handlers to use
@@ -196,6 +197,11 @@ def setup_logging(log_level: str = "INFO", log_format: str = "json") -> None:
                 "handlers": handler_list,
                 "propagate": False,
             },
+            "app.logging.middleware": {
+                "level": log_level,
+                "handlers": handler_list,
+                "propagate": False,
+            },
             "uvicorn": {
                 "level": "INFO",
                 "handlers": handler_list,
@@ -203,6 +209,21 @@ def setup_logging(log_level: str = "INFO", log_format: str = "json") -> None:
             },
             "uvicorn.access": {
                 "level": "INFO",
+                "handlers": handler_list,
+                "propagate": False,
+            },
+            "uvicorn.error": {
+                "level": "INFO",
+                "handlers": handler_list,
+                "propagate": False,
+            },
+            "watchfiles": {
+                "level": "WARNING",
+                "handlers": handler_list,
+                "propagate": False,
+            },
+            "watchfiles.main": {
+                "level": "WARNING",
                 "handlers": handler_list,
                 "propagate": False,
             },

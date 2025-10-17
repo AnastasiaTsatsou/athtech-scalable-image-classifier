@@ -87,7 +87,6 @@ comparisons/
 │   └── test_images/                 # Synthetic and real test images
 ├── benchmark_comparison.py          # Unified benchmark script
 ├── run_full_comparison.py           # End-to-end orchestration (legacy)
-├── deployment_analysis.md           # Complexity analysis
 └── results/                         # Generated results
     ├── comparison_results_*.json   # Detailed benchmark results
     └── comparison_report_*.md       # Markdown comparison report
@@ -238,13 +237,12 @@ To extend the comparison:
 
 1. **Add New Systems**: Create new directories with deployment scripts
 2. **Modify Benchmarks**: Update `benchmark_comparison.py` for new test scenarios
-3. **Improve Analysis**: Enhance `deployment_analysis.md` with new metrics
+3. **Improve Analysis**: Add new metrics and analysis to the comparison framework
 4. **Add Tests**: Include more realistic test images and scenarios
 
 ## Support
 
 For issues or questions:
 1. Check the troubleshooting section above
-2. Review the deployment analysis document
-3. Check Kubernetes cluster logs
-4. Verify all prerequisites are installed
+2. Check Kubernetes cluster logs
+3. Verify all prerequisites are installed

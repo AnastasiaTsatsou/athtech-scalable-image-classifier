@@ -104,18 +104,18 @@ docker-compose -f docker-compose.performance.yml up -d
 
 ```bash
 # Basic deployment (image classifier only)
-kubectl apply -f k8s/
+kubectl apply -k k8s/
 
 # With monitoring (Prometheus + Grafana)
-kubectl apply -f k8s/monitoring/
+kubectl apply -k k8s/monitoring/
 
 # With logging (ELK Stack)
-kubectl apply -f k8s/logging/
+kubectl apply -k k8s/logging/
 
 # Full stack (deploy all components)
-kubectl apply -f k8s/
-kubectl apply -f k8s/monitoring/
-kubectl apply -f k8s/logging/
+kubectl apply -k k8s/
+kubectl apply -k k8s/monitoring/
+kubectl apply -k k8s/logging/
 
 # Port forwarding for local access (run in separate terminals)
 kubectl port-forward svc/image-classifier-service 80:80

@@ -1,0 +1,29 @@
+{
+  "model_info": {
+    "model_name": "mobilenet_v3_large",
+    "device": "cpu",
+    "num_classes": "1000",
+    "framework": "PyTorch",
+    "quantized": "True",
+    "torchscript": "True",
+    "parameters": "2971952",
+    "model_size_mb": "11.4"
+  },
+  "analysis": {
+    "total_requests": 50,
+    "successful_requests": 50,
+    "failed_requests": 0,
+    "success_rate": 1.0,
+    "avg_response_time": 0.029355249404907226,
+    "min_response_time": 0.005055427551269531,
+    "max_response_time": 0.08787178993225098,
+    "median_response_time": 0.029593467712402344,
+    "p95_response_time": 0.0471501350402832,
+    "p99_response_time": 0.08787178993225098,
+    "requests_per_second": 34.09283068682053,
+    "error_breakdown": {},
+    "total_time": 1.4807908535003662,
+    "iterations": 50
+  },
+  "timestamp": "20251019_173313"
+}

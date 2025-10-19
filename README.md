@@ -77,6 +77,19 @@ A scalable image classification service built with FastAPI, PyTorch, and contain
 └── README.md               # This file
 ```
 
+## Prerequisites
+
+### Required Software
+- **Docker Desktop** (for Kubernetes deployment)
+- **kubectl** (Kubernetes command-line tool)
+- **Python 3.8+** (for local development)
+
+### For Kubernetes Deployment
+- **Docker images must be built locally** before deployment
+- **Docker Desktop required** - Kubernetes will use locally built images
+- **Custom images included**: Kibana (with dashboard preloading), Nginx Load Balancer
+- For other Kubernetes environments (Minikube, cloud), images need to be pushed to a container registry
+
 ## Quick Start
 
 ### Option 1: Docker Deployment (Recommended)
@@ -102,38 +115,44 @@ docker-compose -f docker-compose.performance.yml up -d
 
 ### Option 2: Kubernetes Deployment
 
+**Important:** Docker images must be built before Kubernetes deployment.
+
 ```bash
-# Basic deployment (image classifier only)
+# Step 1: Build Docker images (required first)
+# Build main application
+docker-compose build image-classifier
+
+# Build custom Grafana image with preloaded dashboard
+docker build -t image-classifier-grafana:latest -f k8s/monitoring/grafana-dockerfile ./monitoring/grafana
+
+# Build custom Kibana image with preloaded dashboard
+docker build -t image-classifier-kibana:latest -f k8s/logging/kibana-dockerfile ./logging/kibana
+
+# Step 2: Deploy to Kubernetes
+# Deploy all components (single namespace: image-classifier)
 kubectl apply -k k8s/
 
-# With monitoring (Prometheus + Grafana)
-kubectl apply -k k8s/monitoring/
-
-# With logging (ELK Stack)
-kubectl apply -k k8s/logging/
-
-# Full stack (deploy all components)
-kubectl apply -k k8s/
-kubectl apply -k k8s/monitoring/
-kubectl apply -k k8s/logging/
-
-# Port forwarding for local access (run in separate terminals)
-kubectl port-forward svc/image-classifier-service 80:80
-kubectl port-forward svc/grafana-service 3000:3000 -n monitoring
-kubectl port-forward svc/prometheus-service 9090:9090 -n monitoring
-kubectl port-forward svc/kibana-service 5601:5601 -n logging
-kubectl port-forward svc/elasticsearch-service 9200:9200 -n logging
+# Port forwarding for services (run in separate terminals)
+kubectl port-forward svc/nginx-load-balancer-service 8080:80 -n image-classifier
+kubectl port-forward svc/grafana 3000:3000 -n image-classifier
+kubectl port-forward svc/prometheus 9090:9090 -n image-classifier
+kubectl port-forward svc/elasticsearch 9200:9200 -n image-classifier
+kubectl port-forward svc/kibana 5601:5601 -n image-classifier
 ```
 
 **Access points:**
-- **Main API**: http://localhost (through ingress or port-forward)
-- **API Documentation**: http://localhost/docs
-- **Grafana**: http://localhost:3000 (admin/admin) - when monitoring is deployed
-- **Prometheus**: http://localhost:9090 - when monitoring is deployed
-- **Kibana Dashboard**: http://localhost:5601 - when logging is deployed
-- **Elasticsearch**: http://localhost:9200 - when logging is deployed
+- **Main API**: http://localhost:8080 (through port-forward)
+- **API Documentation**: http://localhost:8080/docs
+- **Grafana**: http://localhost:3000 (admin/admin) - with preloaded dashboard
+- **Prometheus**: http://localhost:9090 - with Node Exporter for system metrics
+- **Kibana Dashboard**: http://localhost:5601 - with preloaded dashboard
+- **Elasticsearch**: http://localhost:9200
 
-**Note:** For Kubernetes deployment, you may need to set up port forwarding or ingress rules to access services locally.
+**Note:** Access method depends on your Kubernetes environment:
+- **Docker Desktop**: LoadBalancer works automatically (http://localhost)
+- **Minikube**: Use `minikube service` or port-forwarding
+- **Cloud Providers**: LoadBalancer gets real external IP
+- **Bare Metal/On-Premises**: Use port-forwarding or install MetalLB
 
 ### Stopping Services
 
@@ -143,9 +162,7 @@ docker-compose down
 docker-compose -f docker-compose.monitoring.yml down
 
 # Stop Kubernetes services
-kubectl delete -f k8s/
-kubectl delete -f k8s/monitoring/
-kubectl delete -f k8s/logging/
+kubectl delete -k k8s/
 ```
 
 ## Deployment Options
@@ -162,6 +179,10 @@ This project includes comprehensive deployment options:
 - **Monitoring** with Prometheus and Grafana ✅
 - **Logging** with ELK stack (Elasticsearch, Logstash, Kibana) ✅
 - **Performance testing** and optimization ✅
+- **Node Exporter** for system metrics (CPU, Memory) ✅
+- **Preloaded dashboards** for Grafana and Kibana ✅
+- **Single namespace deployment** for simplified management ✅
+- **HPA (Horizontal Pod Autoscaler)** for automatic scaling ✅
 
 ### Access Points by Deployment Type
 
@@ -182,12 +203,12 @@ This project includes comprehensive deployment options:
 - Elasticsearch: http://localhost:9200
 
 **Kubernetes Deployment:**
-- Main API: http://localhost (through ingress)
-- API Documentation: http://localhost/docs
-- Grafana: http://localhost:3000 (admin/admin) - when monitoring deployed
-- Prometheus: http://localhost:9090 - when monitoring deployed
-- Kibana Dashboard: http://localhost:5601 - when logging deployed
-- Elasticsearch: http://localhost:9200 - when logging deployed
+- Main API: http://localhost:8080 (through port-forward)
+- API Documentation: http://localhost:8080/docs
+- Grafana: http://localhost:3000 (admin/admin) - with preloaded dashboard
+- Prometheus: http://localhost:9090 - with Node Exporter for system metrics
+- Kibana Dashboard: http://localhost:5601 - with preloaded dashboard
+- Elasticsearch: http://localhost:9200
 
 **Full Stack:**
 - All of the above services running simultaneously
@@ -251,6 +272,25 @@ The service is optimized to meet the following performance targets:
 
 These targets are validated through comprehensive performance testing and represent a 99.1% improvement from the original implementation.
 
+### Performance Optimization
+
+**Memory Management:**
+- **Memory Limits**: 4Gi per pod (increased from 1Gi to handle ML workloads)
+- **Memory Requests**: 1Gi per pod (increased from 512Mi for better resource allocation)
+- **HPA Memory Threshold**: 75% utilization (optimized for ML workloads)
+- **Max Replicas**: 20 pods (increased from 10 for better scaling)
+
+**Scaling Behavior:**
+- **Aggressive Scale-Up**: 100% increase or 4 pods every 30 seconds
+- **Conservative Scale-Down**: 10% decrease every 60 seconds
+- **Stabilization Windows**: 30s scale-up, 300s scale-down
+
+**Performance Results:**
+- **Light Load**: 100% success rate, <20ms response time
+- **Medium Load**: 100% success rate, <50ms response time  
+- **High Load**: 38% success rate (improved from previous 11% with memory optimization)
+- **Memory Stress**: 22% success rate (improved from previous 11% with increased limits)
+
 ## API Endpoints
 
 ### Health Check
@@ -297,6 +337,13 @@ curl -X POST "http://localhost/api/v1/classify" \
      -H "Content-Type: multipart/form-data" \
      -F "file=@path/to/your/image.jpg" \
      -F "top_k=5"
+
+# Classify an image (Kubernetes deployment)
+curl -X POST "http://localhost:8080/api/v1/classify" \
+     -H "accept: application/json" \
+     -H "Content-Type: multipart/form-data" \
+     -F "file=@path/to/your/image.jpg" \
+     -F "top_k=5"
 ```
 
 ### Using Python
@@ -316,6 +363,14 @@ with open('image.jpg', 'rb') as f:
 with open('image.jpg', 'rb') as f:
     response = requests.post(
         'http://localhost/api/v1/classify',
+        files={'file': f},
+        data={'top_k': 5}
+    )
+
+# Classify an image (Kubernetes deployment)
+with open('image.jpg', 'rb') as f:
+    response = requests.post(
+        'http://localhost:8080/api/v1/classify',
         files={'file': f},
         data={'top_k': 5}
     )
@@ -363,6 +418,7 @@ mypy app/ --ignore-missing-imports
 2. **Memory issues**: Ensure Docker has sufficient memory allocated (recommended: 4GB+)
 3. **Container restart loops**: Check logs with `docker logs <container-name>`
 4. **Network issues**: Ensure all services are on the same Docker network
+5. **Namespace timing issues**: Use Kustomize (kubectl apply -k) instead of individual files to ensure proper resource ordering
 
 **Useful Commands:**
 
@@ -378,7 +434,24 @@ docker stats
 
 # Clean up unused resources
 docker system prune -a
+
+# Check built images
+docker images | grep image-classifier
+
+# Rebuild specific service
+docker-compose build image-classifier
+docker build -t image-classifier-grafana:latest -f k8s/monitoring/grafana-dockerfile ./monitoring/grafana
+docker build -t image-classifier-kibana:latest -f k8s/logging/kibana-dockerfile ./logging/kibana
 ```
+
+**Image Building Issues:**
+
+If you encounter issues building custom images:
+1. **Grafana build fails**: Check `k8s/monitoring/grafana-dockerfile` and ensure dashboard files exist in `monitoring/grafana/`
+2. **Kibana build fails**: Check `k8s/logging/kibana-dockerfile` and ensure dashboard files exist in `logging/kibana/`
+3. **Permission issues**: Run `docker build --no-cache` to rebuild from scratch
+4. **Missing files**: Ensure all referenced files in Dockerfiles exist in the correct paths
+5. **Namespace issues**: All services deploy to the `image-classifier` namespace
 
 ## License
 

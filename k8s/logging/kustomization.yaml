@@ -1,0 +1,22 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: image-classifier
+
+resources:
+- elasticsearch-pvc.yaml
+- elasticsearch-deployment.yaml
+- elasticsearch-service.yaml
+- kibana-deployment.yaml
+- kibana-service.yaml
+- logstash-configmap.yaml
+- logstash-deployment.yaml
+- logstash-service.yaml
+- filebeat-configmap.yaml
+- filebeat-rbac.yaml
+- filebeat-daemonset.yaml
+
+labels:
+- pairs:
+    app: logging-stack
+    version: v1

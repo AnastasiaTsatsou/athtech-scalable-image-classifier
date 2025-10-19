@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logstash-config
+  namespace: image-classifier
+data:
+  pipelines.yml: |
+    - pipeline.id: main
+      path.config: "/usr/share/logstash/pipeline/logstash.conf"
+  logstash.yml: |
+    http.host: "0.0.0.0"
+    xpack.monitoring.elasticsearch.hosts: [ "http://elasticsearch:9200" ]
+  logstash.conf: |
+    input {
+      beats {
+        port => 5044
+      }
+    }
+    
+    filter {
+      # Process logs from image-classifier namespace
+      if [kubernetes][namespace] == "image-classifier" {
+        # Parse JSON logs from message field (single line logs)
+        if [message] =~ /^\{.*\}$/ {
+          json {
+            source => "message"
+          }
+        }
+        
+        # Replace service field for image-classifier logs
+        mutate {
+          replace => { "service" => "image-classifier" }
+        }
+      }
+    }
+    
+    output {
+      elasticsearch {
+        hosts => ["elasticsearch:9200"]
+        index => "image-classifier-logs-%{+YYYY.MM.dd}"
+        template_name => "image-classifier-logs"
+        template_overwrite => true
+        ilm_enabled => true
+        ilm_policy => "log-retention-policy"
+        ilm_pattern => "000001"
+        ilm_rollover_alias => "image-classifier-logs"
+      }
+      
+      # Debug output
+      stdout {
+        codec => rubydebug
+      }
+    }

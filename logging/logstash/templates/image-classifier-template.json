@@ -42,7 +42,7 @@
         "process": {
           "type": "long"
         },
-        "service": {
+        "app_service": {
           "type": "keyword"
         },
         "request_type": {

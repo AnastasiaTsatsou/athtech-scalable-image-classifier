@@ -11,11 +11,18 @@ This directory contains a complete comparison framework for evaluating different
 ## Current Status
 
 ✅ **Working Systems:**
-- Custom FastAPI (Kubernetes deployment on port 8081)
+- Custom FastAPI (Kubernetes deployment via nginx-load-balancer-service on port 8081)
 - TensorFlow Serving (MobileNetV3-Large on port 8082)
 
 ⏳ **Future Setup:**
 - KServe (files ready, operator installation needed)
+
+**Note**: The Custom FastAPI system uses the optimized `k8s/` deployment with:
+- 4Gi memory limits per pod (optimized for ML workloads)
+- HPA scaling (3-20 replicas, 75% memory threshold)
+- Nginx load balancer for high availability
+- Prometheus monitoring with Node Exporter
+- ELK stack for centralized logging
 
 ## Quick Start
 
@@ -47,8 +54,8 @@ python benchmark_comparison.py
 
 1. **Deploy Custom System** (if not already running):
    ```bash
-   kubectl apply -f ../k8s/
-   kubectl port-forward -n image-classifier service/image-classifier-service 8081:80
+   kubectl apply -k ../k8s/
+   kubectl port-forward -n image-classifier service/nginx-load-balancer-service 8081:80
    ```
 
 2. **Deploy TensorFlow Serving** (if not already running):
@@ -78,10 +85,18 @@ comparisons/
 │   ├── pvc.yaml                     # Persistent volume claim
 │   └── model-store/                 # Generated TorchServe models
 ├── tensorflow-serving/              # TensorFlow Serving deployment (working)
-│   ├── deployment-proxy.yaml        # TF Serving with Nginx proxy
-│   ├── service-proxy.yaml           # Service for proxy
-│   ├── namespace.yaml               # Namespace
-│   └── test_deployment.py           # Validation script
+│   ├── export_mobilenet_to_tensorflow.py  # Model export script
+│   ├── test_tfserving_mobilenet.py       # Validation script
+│   ├── k8s/                              # Kubernetes manifests
+│   │   ├── namespace.yaml                # Namespace
+│   │   ├── pvc.yaml                      # Persistent volume claim
+│   │   ├── deployment-mobilenet.yaml      # TF Serving deployment
+│   │   ├── service-mobilenet.yaml        # Service for TF Serving
+│   │   ├── deployment-proxy.yaml         # Nginx proxy deployment
+│   │   └── service-proxy.yaml            # Service for proxy
+│   ├── models/                           # Exported TensorFlow models
+│   │   └── mobilenet_v3_large/           # MobileNetV3-Large model
+│   └── README.md                         # TensorFlow Serving documentation
 ├── test_images/                     # Test images for validation
 │   ├── create_test_images.py        # Image generator script
 │   └── test_images/                 # Synthetic and real test images
@@ -129,7 +144,7 @@ Based on the latest benchmark run:
 ## Port Configuration
 
 The systems use these ports:
-- **Custom System**: `localhost:8081` (Kubernetes deployment)
+- **Custom System**: `localhost:8081` (Kubernetes deployment via nginx-load-balancer-service)
 - **TensorFlow Serving**: `localhost:8082` (MobileNetV3-Large service)
 - **KServe**: `localhost:8083` (KServe InferenceService - when deployed)
 

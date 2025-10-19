@@ -1,147 +1,165 @@
-# Kubernetes Deployment
+# Clean Kubernetes Deployment
 
-This directory contains Kubernetes manifests for deploying the Scalable Image Classifier.
+This directory contains a complete, clean Kubernetes deployment for the scalable image classifier with monitoring and logging.
 
-## Files
+## Architecture
 
-- `namespace.yaml` - Creates the image-classifier namespace
-- `configmap.yaml` - Application configuration
-- `deployment.yaml` - Main application deployment with 3 replicas
-- `service.yaml` - ClusterIP service for internal communication
-- `hpa.yaml` - Horizontal Pod Autoscaler for automatic scaling
-- `ingress.yaml` - Ingress configuration for external access
-- `network-policy.yaml` - Network security policies
-- `kustomization.yaml` - Kustomize configuration for easy deployment
+- **Base Stack**: Image classifier service with HPA and Nginx load balancer
+- **Monitoring Stack**: Prometheus and Grafana with preloaded dashboard
+- **Logging Stack**: ELK stack (Elasticsearch, Logstash, Kibana) with preloaded dashboard
 
 ## Prerequisites
 
-1. Kubernetes cluster (v1.19+)
-2. kubectl configured to access the cluster
-3. Docker image built and available
-4. Ingress controller (nginx-ingress recommended)
+1. **Docker Desktop** with Kubernetes enabled
+2. **kubectl** configured to use Docker Desktop Kubernetes
+3. **Docker images** must be built before deployment
 
-## Quick Deployment
+## Build Instructions
 
-### Using the deployment script:
+### 1. Build Main Application Image
 ```bash
-# Make scripts executable
-chmod +x scripts/deploy.sh scripts/undeploy.sh
-
-# Deploy to Kubernetes
-./scripts/deploy.sh
-
-# Undeploy from Kubernetes
-./scripts/undeploy.sh
+# From project root
+docker-compose build image-classifier
 ```
 
-### Manual deployment:
+### 2. Build Custom Grafana Image
 ```bash
-# Apply all manifests
+# From project root
+docker build -t image-classifier-grafana:latest -f k8s/monitoring/grafana-dockerfile ./monitoring/grafana
+```
+
+### 3. Build Custom Kibana Image
+```bash
+# From project root
+docker build -t image-classifier-kibana:latest -f k8s/logging/kibana-dockerfile ./logging/kibana
+```
+
+## Deployment
+
+### Deploy Everything
+```bash
+# From project root
 kubectl apply -k k8s/
-
-# Check deployment status
-kubectl get pods -n image-classifier
-kubectl get services -n image-classifier
-kubectl get ingress -n image-classifier
 ```
 
-## Accessing the Service
-
-### Port Forward (for testing):
+### Deploy Individual Stacks
 ```bash
-kubectl port-forward service/image-classifier-service 8000:80 -n image-classifier
+# Base application only
+kubectl apply -k k8s/base/
+
+# With monitoring
+kubectl apply -k k8s/base/
+kubectl apply -k k8s/monitoring/
+
+# With logging
+kubectl apply -k k8s/base/
+kubectl apply -k k8s/logging/
+
+# Full stack (all components)
+kubectl apply -k k8s/
 ```
 
-Then visit:
-- API: http://localhost:8000
-- Documentation: http://localhost:8000/docs
-- Health Check: http://localhost:8000/api/v1/health
+## Access Services
 
-### Using Ingress:
-If you have an ingress controller configured, the service will be available at:
-- http://image-classifier.local (add to /etc/hosts)
-
-## Scaling
-
-### Manual scaling:
+### Port Forwarding
 ```bash
-# Scale to 5 replicas
-kubectl scale deployment image-classifier --replicas=5 -n image-classifier
+# Main API (through Nginx load balancer)
+kubectl port-forward svc/nginx-load-balancer-service 8080:80 -n image-classifier
+
+# Grafana Dashboard
+kubectl port-forward svc/grafana 3000:3000 -n image-classifier
+
+# Prometheus
+kubectl port-forward svc/prometheus 9090:9090 -n image-classifier
+
+# Kibana Dashboard
+kubectl port-forward svc/kibana 5601:5601 -n image-classifier
+
+# Elasticsearch
+kubectl port-forward svc/elasticsearch 9200:9200 -n image-classifier
 ```
 
-### Automatic scaling:
-The HPA (Horizontal Pod Autoscaler) is configured to:
-- Scale between 3-10 replicas
-- Scale based on CPU (70%) and memory (80%) utilization
-- Use intelligent scaling policies
+### Access URLs
+- **Main API**: http://localhost:8080
+- **API Documentation**: http://localhost:8080/docs
+- **Grafana**: http://localhost:3000 (admin/admin)
+- **Prometheus**: http://localhost:9090
+- **Kibana**: http://localhost:5601
+- **Elasticsearch**: http://localhost:9200
 
-## Monitoring
+## Key Features
 
-### Check logs:
-```bash
-# All pods
-kubectl logs -f deployment/image-classifier -n image-classifier
+### Service Discovery
+- Prometheus uses **pod-based discovery** with annotations
+- Job name: `image-classifier-docker` (matches existing Grafana dashboard)
+- No changes needed to dashboard queries
 
-# Specific pod
-kubectl logs -f <pod-name> -n image-classifier
-```
+### Preloaded Dashboards
+- **Grafana**: Scalability monitoring dashboard with metrics from Prometheus
+- **Kibana**: Complete logging dashboard with log analysis
 
-### Check resource usage:
-```bash
-kubectl top pods -n image-classifier
-kubectl top nodes
-```
+### RBAC Permissions
+- Prometheus: Full cluster access for service discovery
+- Filebeat: Pod and namespace access for log collection
 
-### Check HPA status:
-```bash
-kubectl get hpa -n image-classifier
-kubectl describe hpa image-classifier-hpa -n image-classifier
-```
-
-## Configuration
-
-Edit `configmap.yaml` to modify:
-- Model configuration (MODEL_NAME, DEVICE)
-- API settings (API_HOST, API_PORT)
-- Logging level (LOG_LEVEL)
-
-After changes, restart the deployment:
-```bash
-kubectl rollout restart deployment/image-classifier -n image-classifier
-```
-
-## Security
-
-The deployment includes:
-- Non-root user execution
-- Read-only root filesystem (where possible)
-- Dropped capabilities
-- Network policies for traffic isolation
-- Resource limits and requests
+### Storage
+- Prometheus: 10Gi PVC for metrics storage
+- Grafana: 5Gi PVC for dashboard data
+- Elasticsearch: 10Gi PVC for log storage
 
 ## Troubleshooting
 
-### Common issues:
+### Check Pod Status
+```bash
+kubectl get pods -n image-classifier
+```
 
-1. **Pods not starting:**
-   ```bash
-   kubectl describe pod <pod-name> -n image-classifier
-   kubectl logs <pod-name> -n image-classifier
-   ```
+### View Logs
+```bash
+# Application logs
+kubectl logs -l app=image-classifier -n image-classifier
 
-2. **Service not accessible:**
-   ```bash
-   kubectl get endpoints -n image-classifier
-   kubectl describe service image-classifier-service -n image-classifier
-   ```
+# Prometheus logs
+kubectl logs -l app=prometheus -n image-classifier
 
-3. **HPA not scaling:**
-   ```bash
-   kubectl describe hpa image-classifier-hpa -n image-classifier
-   kubectl get events -n image-classifier
-   ```
+# Grafana logs
+kubectl logs -l app=grafana -n image-classifier
 
-4. **Image pull errors:**
-   - Ensure Docker image is built and tagged correctly
-   - Check if image is accessible from the cluster
-   - Verify imagePullPolicy in deployment.yaml
+# Elasticsearch logs
+kubectl logs -l app=elasticsearch -n image-classifier
+```
+
+### Check Service Discovery
+```bash
+# Check Prometheus targets
+kubectl port-forward svc/prometheus 9090:9090 -n image-classifier
+# Then visit http://localhost:9090/targets
+```
+
+### Verify Metrics
+```bash
+# Check if metrics endpoint is working
+kubectl port-forward svc/image-classifier-service 8000:80 -n image-classifier
+curl http://localhost:8000/metrics
+```
+
+## Cleanup
+
+```bash
+# Remove all resources
+kubectl delete -k k8s/
+
+# Or remove individual stacks
+kubectl delete -k k8s/base/
+kubectl delete -k k8s/monitoring/
+kubectl delete -k k8s/logging/
+```
+
+## Configuration Files
+
+- `base/` - Core application deployment
+- `monitoring/` - Prometheus and Grafana
+- `logging/` - ELK stack
+- `kustomization.yaml` - Main kustomization file
+
+All configurations use the `image-classifier` namespace for simplicity.

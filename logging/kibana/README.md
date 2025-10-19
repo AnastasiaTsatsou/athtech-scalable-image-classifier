@@ -19,7 +19,7 @@ This directory contains the configuration for automatically preloading Kibana da
 ## Dashboard File
 
 The `complete-dashboard.ndjson` file contains:
-- Index pattern for `image-classifier-logs-*`
+- Index pattern for `image-classifier-logs*`
 - Comprehensive monitoring dashboard with multiple visualizations:
   - Request Success Rate (Gauge)
   - Average Response Time (Metric)

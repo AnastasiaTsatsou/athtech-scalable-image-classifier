@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: grafana
-  namespace: monitoring
+  namespace: image-classifier
   labels:
     app: grafana
 spec:
@@ -17,7 +17,8 @@ spec:
     spec:
       containers:
       - name: grafana
-        image: grafana/grafana:latest
+        image: image-classifier-grafana:latest
+        imagePullPolicy: Never
         ports:
         - containerPort: 3000
         env:
@@ -41,31 +42,3 @@ spec:
       - name: grafana-storage
         persistentVolumeClaim:
           claimName: grafana-pvc
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: grafana
-  namespace: monitoring
-  labels:
-    app: grafana
-spec:
-  type: ClusterIP
-  ports:
-  - port: 3000
-    targetPort: 3000
-    name: http
-  selector:
-    app: grafana
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: grafana-pvc
-  namespace: monitoring
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 5Gi

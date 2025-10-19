@@ -16,8 +16,8 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "up{job=\"image-classifier-docker\"}",
-          "legendFormat": "{{instance}}"
+          "expr": "min(up{job=\"image-classifier-docker\"})",
+          "legendFormat": "Service Status"
         }
       ],
       "fieldConfig": {
@@ -35,7 +35,11 @@
             {"type": "value", "value": "0", "text": "DOWN"},
             {"type": "value", "value": "1", "text": "UP"}
           ],
-          "unit": "short"
+          "unit": "short",
+          "displayName": "Status",
+          "custom": {
+            "displayMode": "basic"
+          }
         }
       },
       "gridPos": {"h": 8, "w": 6, "x": 0, "y": 0}

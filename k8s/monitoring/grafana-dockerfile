@@ -1,0 +1,28 @@
+FROM grafana/grafana:latest
+
+# Switch to root to install packages and set permissions
+USER root
+
+# Create directories for dashboards and provisioning
+RUN mkdir -p /etc/grafana/provisioning/datasources && \
+    mkdir -p /etc/grafana/provisioning/dashboards && \
+    mkdir -p /etc/grafana/dashboards
+
+# Copy datasource configuration
+COPY provisioning/datasources/prometheus.yml /etc/grafana/provisioning/datasources/
+
+# Copy dashboard configuration
+COPY provisioning/dashboards/dashboard.yml /etc/grafana/provisioning/dashboards/
+
+# Copy dashboard JSON
+COPY dashboards/scalability-monitoring-dashboard.json /etc/grafana/dashboards/
+
+# Set proper permissions (Grafana runs as UID 472)
+RUN chown -R 472:472 /etc/grafana && \
+    chown -R 472:472 /etc/grafana/dashboards
+
+# Switch back to grafana user
+USER grafana
+
+# Expose port
+EXPOSE 3000

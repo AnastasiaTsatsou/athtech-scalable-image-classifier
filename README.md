@@ -18,6 +18,7 @@ A scalable image classification service built with FastAPI, PyTorch, and contain
 - **Logging** with ELK stack (Elasticsearch, Logstash, Kibana) for centralized log management
 - **Performance testing** with Locust for load testing
 - **Kubernetes deployment** manifests for cloud deployment
+- **Docker Hub images** - ready-to-deploy with preloaded dashboards
 - **Code quality tools** (black, flake8, mypy) for maintainable code
 
 ## Project Structure
@@ -115,20 +116,9 @@ docker-compose -f docker-compose.performance.yml up -d
 
 ### Option 2: Kubernetes Deployment
 
-**Important:** Docker images must be built before Kubernetes deployment.
+**Ready to Deploy:** All Docker images are available on Docker Hub - no local building required!
 
 ```bash
-# Step 1: Build Docker images (required first)
-# Build main application
-docker-compose build image-classifier
-
-# Build custom Grafana image with preloaded dashboard
-docker build -t image-classifier-grafana:latest -f k8s/monitoring/grafana-dockerfile ./monitoring/grafana
-
-# Build custom Kibana image with preloaded dashboard
-docker build -t image-classifier-kibana:latest -f k8s/logging/kibana-dockerfile ./logging/kibana
-
-# Step 2: Deploy to Kubernetes
 # Deploy all components (single namespace: image-classifier)
 kubectl apply -k k8s/
 
@@ -139,6 +129,12 @@ kubectl port-forward svc/prometheus 9090:9090 -n image-classifier
 kubectl port-forward svc/elasticsearch 9200:9200 -n image-classifier
 kubectl port-forward svc/kibana 5601:5601 -n image-classifier
 ```
+
+**Docker Images Used:**
+- **Main Application**: `anastasiatsatsou/athtech-scalable-image-classifier:latest`
+- **Grafana**: `anastasiatsatsou/image-classifier-grafana:latest` (with preloaded dashboard)
+- **Kibana**: `anastasiatsatsou/image-classifier-kibana:latest` (with preloaded dashboard)
+- **Other Services**: Public images (nginx, prometheus, elasticsearch, etc.)
 
 **Access points:**
 - **Main API**: http://localhost:8080 (through port-forward)

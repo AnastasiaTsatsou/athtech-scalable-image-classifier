@@ -23,8 +23,8 @@ spec:
     spec:
       containers:
       - name: image-classifier
-        image: athtech-scalable-image-classifier-image-classifier:latest
-        imagePullPolicy: Never
+        image: anastasiatsatsou/athtech-scalable-image-classifier:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8000
           name: metrics

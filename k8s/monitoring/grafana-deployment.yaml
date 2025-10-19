@@ -17,8 +17,8 @@ spec:
     spec:
       containers:
       - name: grafana
-        image: image-classifier-grafana:latest
-        imagePullPolicy: Never
+        image: anastasiatsatsou/image-classifier-grafana:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 3000
         env:

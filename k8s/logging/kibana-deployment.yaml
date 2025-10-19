@@ -17,8 +17,8 @@ spec:
     spec:
       containers:
       - name: kibana
-        image: image-classifier-kibana:latest
-        imagePullPolicy: Never
+        image: anastasiatsatsou/image-classifier-kibana:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 5601
           name: http

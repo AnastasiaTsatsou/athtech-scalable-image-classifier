@@ -10,37 +10,44 @@ This directory contains a complete, clean Kubernetes deployment for the scalable
 
 ## Prerequisites
 
-1. **Docker Desktop** with Kubernetes enabled
-2. **kubectl** configured to use Docker Desktop Kubernetes
-3. **Docker images** must be built before deployment
+1. **Docker Desktop** with Kubernetes enabled (or any Kubernetes cluster)
+2. **kubectl** configured to use your Kubernetes cluster
+3. **Internet access** to pull Docker images from Docker Hub
 
-## Build Instructions
+## Docker Images
 
-### 1. Build Main Application Image
-```bash
-# From project root
-docker-compose build image-classifier
-```
+All custom images are available on Docker Hub - **no local building required!**
 
-### 2. Build Custom Grafana Image
-```bash
-# From project root
-docker build -t image-classifier-grafana:latest -f k8s/monitoring/grafana-dockerfile ./monitoring/grafana
-```
+### Custom Images
+- **Main Application**: `anastasiatsatsou/athtech-scalable-image-classifier:latest`
+- **Grafana**: `anastasiatsatsou/image-classifier-grafana:latest` (with preloaded dashboard)
+- **Kibana**: `anastasiatsatsou/image-classifier-kibana:latest` (with preloaded dashboard)
 
-### 3. Build Custom Kibana Image
-```bash
-# From project root
-docker build -t image-classifier-kibana:latest -f k8s/logging/kibana-dockerfile ./logging/kibana
-```
+### Public Images
+- **Nginx**: `nginx:1.25-alpine`
+- **Prometheus**: `prom/prometheus:latest`
+- **Node Exporter**: `prom/node-exporter:latest`
+- **Elasticsearch**: `docker.elastic.co/elasticsearch/elasticsearch:8.11.0`
+- **Logstash**: `docker.elastic.co/logstash/logstash:8.11.0`
+- **Filebeat**: `docker.elastic.co/beats/filebeat:8.11.0`
 
 ## Deployment
 
-### Deploy Everything
+### Quick Start (Recommended)
 ```bash
-# From project root
+# Deploy everything with one command - no building required!
 kubectl apply -k k8s/
 ```
+
+**That's it!** All images will be pulled from Docker Hub automatically.
+
+### Benefits of Docker Hub Deployment
+- ✅ **No local building** required
+- ✅ **Consistent images** across all environments
+- ✅ **Faster deployment** - just pull and run
+- ✅ **Version control** - images are tagged and versioned
+- ✅ **Easy sharing** - anyone can deploy your stack
+- ✅ **Preloaded dashboards** - Grafana and Kibana come ready to use
 
 ### Deploy Individual Stacks
 ```bash
